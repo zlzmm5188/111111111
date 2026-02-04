@@ -1,0 +1,5 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100" height="100" rx="12" fill="#1E3A8A"/>
+  <text x="50" y="42" text-anchor="middle" fill="#fff" font-size="22" font-weight="bold" font-family="Arial">BYD</text>
+  <text x="50" y="68" text-anchor="middle" fill="#6CB4EE" font-size="14" font-family="Arial">比亚迪</text>
+</svg>

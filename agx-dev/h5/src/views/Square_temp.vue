@@ -1,0 +1,1470 @@
+<template>
+  <div class="square-page">
+    <!-- Header -->
+    <header class="page-header">
+      <div class="header-main">
+        <div class="logo">
+          <span class="logo-icon">AGX</span>
+          <div class="logo-text">
+            <h1>广场</h1>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="header-btn" @click="refreshData" :class="{ spinning: isRefreshing }">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 4v6h-6M1 20v-6h6"/>
+              <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+            </svg>
+          </button>
+          <button class="header-btn" @click="goSearch">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      
+      <!-- 分类导航 -->
+      <nav class="category-nav">
+        <div 
+          v-for="t in tabs" 
+          :key="t.key"
+          class="category-item" 
+          :class="{ active: tab === t.key }"
+          @click="tab = t.key"
+        >{{ t.label }}</div>
+      </nav>
+    </header>
+
+    <main class="main-content">
+      <!-- ========== 发现Tab ========== -->
+      <template v-if="tab === 'feed'">
+        <!-- 7×24快讯 -->
+        <section class="flash-news">
+          <div class="flash-header">
+            <span class="flash-title">7×24快讯</span>
+            <span class="flash-more" @click="tab = 'news'">更多</span>
+          </div>
+          <div class="flash-list">
+            <div 
+              v-for="f in flashList.slice(0, 3)" 
+              :key="f.id" 
+              class="flash-item"
+              @click="openFlash(f)"
+            >
+              <span class="flash-time">{{ f.time }}</span>
+              <p class="flash-text">
+                <span class="highlight">【{{ f.tag }}】</span>{{ f.text }}
+              </p>
+            </div>
+            <div v-if="!flashList.length && !flashLoading" class="flash-item">
+              <span class="flash-time">--:--</span>
+              <p class="flash-text">暂无快讯</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 热门话题 -->
+        <section class="hot-topics" v-if="topics.length">
+          <div class="hot-topics-title">热门话题</div>
+          <div class="hot-list">
+            <div 
+              v-for="(t, i) in topics.slice(0, 8)" 
+              :key="t.name" 
+              class="hot-tag"
+              :class="{ top: i < 3 }"
+              @click="goTopic(t.name)"
+            >
+              <span class="hot-rank" v-if="i < 3">{{ i + 1 }}</span>
+              #{{ t.name }}
+            </div>
+          </div>
+        </section>
+
+        <!-- 帖子列表 -->
+        <section class="news-section">
+          <div class="section-header">
+            <h2 class="section-title">社区动态</h2>
+          </div>
+          <div class="feed-list">
+            <article 
+              v-for="p in postsList" 
+              :key="p.id" 
+              class="post-card"
+              @click="goPost(p)"
+            >
+              <div class="post-author">
+                <div class="author-left" @click.stop="goUser(p.authorId)">
+                  <div class="author-avatar">
+                    <img v-if="p.avatar" :src="p.avatar" alt="">
+                    <span v-else class="avatar-text">{{ p.author?.charAt(0) }}</span>
+                  </div>
+                  <div class="author-meta">
+                    <div class="author-name-row">
+                      <span class="author-name">{{ p.author }}</span>
+                      <span v-if="p.verified" class="badge gold">V</span>
+                      <span v-if="p.level" class="badge muted">Lv.{{ p.level }}</span>
+                    </div>
+                    <span class="author-time">{{ p.time }}</span>
+                  </div>
+                </div>
+                <button 
+                  v-if="!p.isFollowing" 
+                  class="btn-follow"
+                  @click.stop="follow(p)"
+                >+关注</button>
+              </div>
+              <p class="post-content">{{ p.content }}</p>
+              <div v-if="p.images?.length" class="post-images" :data-count="Math.min(p.images.length, 4)">
+                <div 
+                  v-for="(img, i) in p.images.slice(0, 4)" 
+                  :key="`${p.id}-img-${i}`" 
+                  class="img-wrap"
+                >
+                  <img :src="img" alt="" loading="lazy" @error="e => e.target.style.display = 'none'">
+                  <span v-if="i === 3 && p.images.length > 4" class="img-more">+{{ p.images.length - 4 }}</span>
+                </div>
+              </div>
+              <div v-if="p.topics?.length" class="post-tags">
+                <span v-for="t in p.topics" :key="t" class="tag-link" @click.stop="goTopic(t)">#{{ t }}</span>
+              </div>
+              <div class="post-actions">
+                <button class="action" :class="{ active: p.isLiked }" @click.stop="like(p)">
+                  <svg viewBox="0 0 24 24" :fill="p.isLiked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5">
+                    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+                  </svg>
+                  <span>{{ fmt(p.likes) }}</span>
+                </button>
+                <button class="action" @click.stop="goPost(p)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                  </svg>
+                  <span>{{ fmt(p.comments) }}</span>
+                </button>
+                <button class="action" @click.stop="share(p)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/>
+                  </svg>
+                </button>
+              </div>
+            </article>
+          </div>
+
+          <button v-if="postsHasMore" class="load-more" @click="loadMore">
+            {{ postsLoadingMore ? '加载中...' : '点击加载更多' }}
+          </button>
+
+          <div v-if="!postsList.length && !postsLoading" class="empty-state">
+            <div class="empty-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+              </svg>
+            </div>
+            <p>暂无动态</p>
+            <button class="btn-primary" @click="goCreate">发布动态</button>
+          </div>
+        </section>
+      </template>
+
+      <!-- ========== 关注Tab ========== -->
+      <template v-else-if="tab === 'following'">
+        <section class="news-section">
+          <div class="section-header">
+            <h2 class="section-title">关注动态</h2>
+          </div>
+          <div v-if="followingList.length" class="feed-list">
+            <article v-for="p in followingList" :key="p.id" class="post-card" @click="goPost(p)">
+              <div class="post-author">
+                <div class="author-left" @click.stop="goUser(p.authorId)">
+                  <div class="author-avatar">
+                    <img v-if="p.avatar" :src="p.avatar" alt="">
+                    <span v-else class="avatar-text">{{ p.author?.charAt(0) }}</span>
+                  </div>
+                  <div class="author-meta">
+                    <span class="author-name">{{ p.author }}</span>
+                    <span class="author-time">{{ p.time }}</span>
+                  </div>
+                </div>
+              </div>
+              <p class="post-content">{{ p.content }}</p>
+              <div class="post-actions">
+                <button class="action" :class="{ active: p.isLiked }" @click.stop="like(p)">
+                  <svg viewBox="0 0 24 24" :fill="p.isLiked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5">
+                    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+                  </svg>
+                  <span>{{ fmt(p.likes) }}</span>
+                </button>
+                <button class="action">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                  </svg>
+                  <span>{{ fmt(p.comments) }}</span>
+                </button>
+                <button class="action">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/>
+                  </svg>
+                </button>
+              </div>
+            </article>
+          </div>
+
+          <button v-if="followingHasMore && followingList.length" class="load-more" @click="loadMoreFollowing">
+            {{ followingLoadingMore ? '加载中...' : '点击加载更多' }}
+          </button>
+
+          <div v-if="!followingList.length && !followingLoading" class="empty-state">
+            <div class="empty-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+              </svg>
+            </div>
+            <p>关注感兴趣的人</p>
+            <span class="empty-hint">发现更多精彩内容</span>
+          </div>
+        </section>
+      </template>
+
+      <!-- ========== 快讯Tab ========== -->
+      <template v-else-if="tab === 'news'">
+        <!-- 快讯子分类 -->
+        <div class="sub-tabs">
+          <div 
+            v-for="st in newsSubTabs" 
+            :key="st.key"
+            class="sub-tab" 
+            :class="{ active: newsFilter === st.key }"
+            @click="newsFilter = st.key"
+          >{{ st.label }}</div>
+        </div>
+
+        <section class="news-section">
+          <div class="news-list">
+            <div 
+              v-for="n in filteredNewsList" 
+              :key="n.id" 
+              class="news-item"
+              @click="openNews(n)"
+            >
+              <div class="news-source-icon" :class="getSourceColor(n.source)">
+                {{ getSourceIcon(n.source) }}
+              </div>
+              <div class="news-content">
+                <h3 class="news-title">{{ n.title || n.text }}</h3>
+                <div class="news-meta">
+                  <span class="source">{{ n.source || 'AGX' }}</span>
+                  <span class="dot">·</span>
+                  <span class="time">{{ n.time }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button v-if="newsHasMore" class="load-more" @click="loadMoreNews">
+            {{ newsLoadingMore ? '加载中...' : '点击加载更多' }}
+          </button>
+
+          <div v-if="!filteredNewsList.length && !newsLoading" class="empty-state">
+            <div class="empty-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                <path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2"/>
+              </svg>
+            </div>
+            <p>暂无快讯</p>
+          </div>
+        </section>
+      </template>
+
+      <!-- ========== 学习Tab ========== -->
+      <template v-else-if="tab === 'learn'">
+        <section class="news-section">
+          <div class="section-header">
+            <h2 class="section-title">投资学堂</h2>
+          </div>
+          <div v-if="learnList.length" class="learn-list">
+            <div 
+              v-for="item in learnList" 
+              :key="item.id" 
+              class="learn-card"
+              @click="openLearn(item)"
+            >
+              <div v-if="item.cover" class="learn-cover">
+                <img :src="item.cover" alt="">
+              </div>
+              <div class="learn-body">
+                <p class="learn-title">{{ item.title }}</p>
+                <p v-if="item.summary" class="learn-summary">{{ item.summary }}</p>
+                <div class="learn-meta">
+                  <span class="learn-source">{{ item.source }}</span>
+                  <span v-if="item.category" class="learn-category">{{ item.category }}</span>
+                  <span class="learn-time">{{ item.time }}</span>
+                </div>
+              </div>
+              <svg class="learn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 18l6-6-6-6"/>
+              </svg>
+            </div>
+          </div>
+
+          <button v-if="learnHasMore && learnList.length" class="load-more" @click="loadMoreLearn">
+            {{ learnLoadingMore ? '加载中...' : '点击加载更多' }}
+          </button>
+
+          <div v-if="!learnList.length && !learnLoading" class="empty-state">
+            <div class="empty-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/>
+                <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
+              </svg>
+            </div>
+            <p>暂无学习内容</p>
+          </div>
+        </section>
+      </template>
+
+      <div class="bottom-space"></div>
+    </main>
+
+    <!-- FAB -->
+    <button class="fab" @click="goCreate">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M12 5v14M5 12h14"/>
+      </svg>
+    </button>
+  </div>
+</template>
+
+<script setup>
+defineOptions({ name: 'Square' })
+
+import { ref, watch, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useSquareNews, useSquarePosts, useSquareTopics, useSquareFollowing, useSquareLearn } from '../composables/useSquare'
+import { alert } from '../utils/alert'
+import { api } from '../utils/api'
+
+const router = useRouter()
+
+const tabs = [
+  { key: 'feed', label: '发现' },
+  { key: 'following', label: '关注' },
+  { key: 'news', label: '快讯' },
+  { key: 'learn', label: '学习' }
+]
+const tab = ref('feed')
+const isRefreshing = ref(false)
+
+// 快讯子标签
+const newsSubTabs = [
+  { key: 'all', label: '全部' },
+  { key: 'market', label: '行情' },
+  { key: 'policy', label: '政策' },
+  { key: 'crypto', label: '加密' }
+]
+const newsFilter = ref('all')
+
+// 话题
+const { topics, loadTopics } = useSquareTopics()
+
+// 关注列表
+const { 
+  followingList, 
+  loading: followingLoading,
+  loadingMore: followingLoadingMore,
+  hasMore: followingHasMore,
+  loadFollowing,
+  loadMoreFollowing: loadMoreFollowingAction
+} = useSquareFollowing()
+
+// 学习内容
+const {
+  learnList,
+  loading: learnLoading,
+  loadingMore: learnLoadingMore,
+  hasMore: learnHasMore,
+  loadLearn,
+  loadMoreLearn: loadMoreLearnAction
+} = useSquareLearn()
+
+// 新闻/快讯
+const { 
+  newsList, loading: newsLoading, loadingMore: newsLoadingMore,
+  hasMore: newsHasMore, loadNews, loadMoreNews: loadMoreNewsAction
+} = useSquareNews()
+
+// 帖子
+const { 
+  postsList, loading: postsLoading, loadingMore: postsLoadingMore,
+  hasMore: postsHasMore, loadPosts, loadMorePosts: loadMorePostsAction, likePost
+} = useSquarePosts()
+
+// 7×24快讯数据（从finance-news获取）
+const flashList = ref([])
+const flashLoading = ref(false)
+
+// 获取7×24快讯 - 从后端API获取
+const loadFlash = async () => {
+  flashLoading.value = true
+  try {
+    // 从AGX后端获取快讯（后端会代理finance-news）
+    const res = await fetch('/api/square/flash?limit=5')
+    if (res.ok) {
+      const data = await res.json()
+      if (data.code === 0 && data.data) {
+        flashList.value = data.data
+      }
+    }
+  } catch (e) {
+    console.log('Flash API not available')
+    // 使用默认数据
+    flashList.value = [
+      { id: 1, time: formatTime(new Date()), tag: '行情', text: '现货黄金短线走高，日内涨幅扩大至0.5%' },
+      { id: 2, time: formatTime(new Date(Date.now() - 300000)), tag: '要闻', text: 'AGX代币24小时交易量突破100万USDT' },
+      { id: 3, time: formatTime(new Date(Date.now() - 900000)), tag: '公告', text: '矿机福利活动限时开启，最高可获10%返利' }
+    ]
+  }
+  flashLoading.value = false
+}
+
+// 过滤后的快讯列表
+const filteredNewsList = computed(() => {
+  if (newsFilter.value === 'all') return newsList.value
+  return newsList.value.filter(n => {
+    const tag = (n.tag || n.category || '').toLowerCase()
+    if (newsFilter.value === 'market') return tag.includes('行情') || tag.includes('市场')
+    if (newsFilter.value === 'policy') return tag.includes('政策') || tag.includes('宏观')
+    if (newsFilter.value === 'crypto') return tag.includes('加密') || tag.includes('币')
+    return true
+  })
+})
+
+const fmt = n => {
+  if (!n) return ''
+  if (n >= 10000) return (n / 10000).toFixed(1) + 'w'
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k'
+  return n
+}
+
+const formatTime = (date) => {
+  const d = new Date(date)
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+const getSourceColor = (source) => {
+  if (!source) return 'gold'
+  const s = source.toLowerCase()
+  if (s.includes('金十') || s.includes('jin10')) return 'red'
+  if (s.includes('财联社') || s.includes('cls')) return 'orange'
+  if (s.includes('华尔街') || s.includes('wall')) return 'blue'
+  if (s.includes('bloomberg') || s.includes('彭博')) return 'purple'
+  return 'gold'
+}
+
+const getSourceIcon = (source) => {
+  if (!source) return 'A'
+  return source.charAt(0)
+}
+
+const goSearch = () => router.push('/search')
+const goPost = p => router.push(`/post/${p.id}`)
+const goUser = id => router.push(`/user/${id}`)
+const goTopic = t => router.push(`/topic/1?name=${encodeURIComponent(t)}`)
+
+// 检查发帖权限并跳转
+const goCreate = async () => {
+  try {
+    const result = await api.square.checkPostCondition()
+    if (result.success && result.data) {
+      if (!result.data.canPost) {
+        await alert(result.data.reason || '您暂时无法发帖')
+        return
+      }
+    }
+  } catch (e) {
+    // 检查失败时允许继续（可能是未登录）
+    console.log('发帖条件检查失败')
+  }
+  router.push('/create-post')
+}
+
+const like = p => likePost(p)
+const follow = p => { p.isFollowing = true }
+const share = p => navigator.share?.({ title: 'AGX', text: p.content?.slice(0, 100), url: `${location.origin}/post/${p.id}` })
+
+// 打开快讯详情
+const openFlash = async (f) => {
+  const content = f.text || f.title || '暂无详细内容'
+  await alert(content)
+}
+
+// 打开新闻
+const openNews = async (n) => {
+  if (n.url) {
+    window.open(n.url, '_blank')
+  } else {
+    const content = n.content || n.text || n.title || '暂无详细内容'
+    await alert(content)
+  }
+}
+
+const loadMore = () => !postsLoadingMore.value && loadMorePostsAction()
+const loadMoreNews = () => !newsLoadingMore.value && loadMoreNewsAction()
+const loadMoreFollowing = () => !followingLoadingMore.value && loadMoreFollowingAction()
+const loadMoreLearn = () => !learnLoadingMore.value && loadMoreLearnAction()
+const openLearn = item => item.url && window.open(item.url, '_blank')
+
+// 刷新数据
+const refreshData = async () => {
+  isRefreshing.value = true
+  await Promise.all([
+    loadFlash(),
+    loadTopics(),
+    loadPosts()
+  ])
+  setTimeout(() => { isRefreshing.value = false }, 1000)
+}
+
+// 初始化加载
+onMounted(() => {
+  loadFlash()
+  loadTopics()
+  loadPosts()
+})
+
+watch(tab, v => {
+  if (v === 'news' && !newsList.value.length) loadNews()
+  if (v === 'following' && !followingList.value.length) loadFollowing()
+  if (v === 'learn' && !learnList.value.length) loadLearn()
+})
+</script>
+
+<style scoped>
+.square-page {
+  width: 100%;
+  max-width: 428px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background: #0a0c10;
+}
+
+/* ==================== Header ==================== */
+.page-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  max-width: 428px;
+  margin: 0 auto;
+  background: linear-gradient(180deg, #1C242E 0%, #161C24 100%);
+  z-index: 100;
+  box-shadow: 0 1px 0 rgba(200, 170, 110, 0.1);
+}
+
+.header-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  padding-top: calc(10px + env(safe-area-inset-top));
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #C8AA6E 0%, #A08050 100%);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 800;
+  color: #0a0c10;
+  letter-spacing: -0.5px;
+}
+
+.logo-text h1 {
+  font-size: 17px;
+  font-weight: 600;
+  background: linear-gradient(180deg, #F5E6C4 0%, #C8AA6E 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.header-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #C8AA6E;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.header-btn:active {
+  background: rgba(200, 170, 110, 0.1);
+}
+
+.header-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.header-btn.spinning svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ==================== 分类导航 ==================== */
+.category-nav {
+  display: flex;
+  padding: 0 12px;
+  gap: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  border-bottom: 1px solid rgba(200, 170, 110, 0.1);
+}
+
+.category-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.category-item {
+  flex-shrink: 0;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #6E7681;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  position: relative;
+}
+
+.category-item:active {
+  background: rgba(200, 170, 110, 0.05);
+}
+
+.category-item.active {
+  color: #C8AA6E;
+  font-weight: 600;
+  border-bottom-color: #C8AA6E;
+}
+
+/* ==================== 主内容 ==================== */
+.main-content {
+  padding-top: calc(96px + env(safe-area-inset-top));
+}
+
+/* ==================== 快讯模块 ==================== */
+.flash-news {
+  background: linear-gradient(145deg, rgba(30, 38, 50, 0.95), rgba(22, 27, 34, 0.9));
+  margin: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(200, 170, 110, 0.15);
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.flash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.flash-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #E6EDF3;
+}
+
+.flash-title::before {
+  content: '';
+  width: 3px;
+  height: 14px;
+  background: linear-gradient(180deg, #C8AA6E 0%, #A08050 100%);
+  border-radius: 2px;
+}
+
+.flash-more {
+  font-size: 12px;
+  color: #6E7681;
+  cursor: pointer;
+}
+
+.flash-list {
+  max-height: 120px;
+  overflow: hidden;
+}
+
+.flash-item {
+  display: flex;
+  padding: 10px 14px;
+  gap: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+}
+
+.flash-item:last-child {
+  border-bottom: none;
+}
+
+.flash-item:active {
+  background: rgba(200, 170, 110, 0.05);
+}
+
+.flash-time {
+  font-size: 11px;
+  color: #484F58;
+  flex-shrink: 0;
+  font-family: "SF Mono", Monaco, monospace;
+}
+
+.flash-text {
+  font-size: 13px;
+  color: #C9D1D9;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+}
+
+.flash-text .highlight {
+  color: #C8AA6E;
+  font-weight: 500;
+}
+
+/* ==================== 热门话题 ==================== */
+.hot-topics {
+  background: linear-gradient(145deg, rgba(30, 38, 50, 0.95), rgba(22, 27, 34, 0.9));
+  margin: 0 12px 12px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(200, 170, 110, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.hot-topics-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #E6EDF3;
+  margin-bottom: 12px;
+}
+
+.hot-topics-title::before {
+  content: '';
+  font-size: 14px;
+}
+
+.hot-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hot-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: rgba(200, 170, 110, 0.08);
+  border: 1px solid rgba(200, 170, 110, 0.15);
+  border-radius: 16px;
+  font-size: 12px;
+  color: #8B949E;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.hot-tag:active {
+  background: rgba(200, 170, 110, 0.15);
+}
+
+.hot-tag.top {
+  background: linear-gradient(135deg, rgba(200, 170, 110, 0.2) 0%, rgba(200, 170, 110, 0.1) 100%);
+  color: #C8AA6E;
+  font-weight: 500;
+}
+
+.hot-rank {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #C8AA6E;
+  color: #0a0c10;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 4px;
+}
+
+/* ==================== 区块标题 ==================== */
+.news-section {
+  background: transparent;
+  margin: 0 12px 12px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #E6EDF3;
+  margin: 0;
+}
+
+.section-title::before {
+  content: '';
+  width: 3px;
+  height: 14px;
+  background: linear-gradient(180deg, #C8AA6E 0%, #A08050 100%);
+  border-radius: 2px;
+}
+
+/* ==================== 子标签 ==================== */
+.sub-tabs {
+  display: flex;
+  padding: 10px 12px;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.sub-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.sub-tab {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: #6E7681;
+  background: rgba(200, 170, 110, 0.08);
+  border: 1px solid rgba(200, 170, 110, 0.15);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sub-tab:active {
+  opacity: 0.7;
+}
+
+.sub-tab.active {
+  color: #0a0c10;
+  background: linear-gradient(135deg, #C8AA6E 0%, #A08050 100%);
+  border-color: #C8AA6E;
+  font-weight: 500;
+}
+
+/* ==================== 新闻列表 ==================== */
+.news-list {
+  padding: 0;
+}
+
+.news-item {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  background: linear-gradient(145deg, rgba(30, 38, 50, 0.95), rgba(22, 27, 34, 0.9));
+  border: 1px solid rgba(200, 170, 110, 0.1);
+  border-radius: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  animation: postFadeIn 0.5s ease-out backwards;
+}
+
+.news-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(200, 170, 110, 0.1);
+  border-color: rgba(200, 170, 110, 0.2);
+}
+
+.news-item:active {
+  transform: translateY(0);
+  background: rgba(40, 48, 60, 0.95);
+}
+
+.news-source-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  margin-top: 2px;
+}
+
+.news-source-icon.gold { background: linear-gradient(135deg, #C8AA6E, #A08050); }
+.news-source-icon.red { background: #E02020; }
+.news-source-icon.orange { background: #F59300; }
+.news-source-icon.green { background: #00A870; }
+.news-source-icon.blue { background: #1A6EE0; }
+.news-source-icon.purple { background: #8B5CF6; }
+
+.news-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.news-title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #E6EDF3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0 0 6px;
+}
+
+.news-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #484F58;
+}
+
+.news-meta .source {
+  color: #6E7681;
+}
+
+.news-meta .dot {
+  color: #30363D;
+}
+
+/* ==================== 帖子卡片 ==================== */
+.feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.post-card {
+  background: linear-gradient(145deg, rgba(30, 38, 50, 0.95), rgba(22, 27, 34, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  animation: postFadeIn 0.5s ease-out backwards;
+  transition: all 0.25s ease;
+}
+
+.post-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(200, 170, 110, 0.15);
+  border-color: rgba(200, 170, 110, 0.2);
+}
+
+.post-card:active {
+  transform: translateY(0);
+  background: rgba(40, 48, 60, 0.95);
+}
+
+.post-author {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.author-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.author-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid rgba(200, 170, 110, 0.3);
+  overflow: hidden;
+  background: #161B22;
+}
+
+.author-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-text {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0a0c10;
+  background: linear-gradient(135deg, #C8AA6E, #A08050);
+}
+
+.author-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.author-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.author-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #E6EDF3;
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+.badge.gold {
+  color: #C8AA6E;
+  background: rgba(200, 170, 110, 0.15);
+}
+
+.badge.muted {
+  color: #6E7681;
+  background: rgba(110, 118, 129, 0.15);
+}
+
+.author-time {
+  font-size: 12px;
+  color: #484F58;
+}
+
+.btn-follow {
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #C8AA6E;
+  background: rgba(200, 170, 110, 0.12);
+  border: 1px solid rgba(200, 170, 110, 0.3);
+  border-radius: 16px;
+}
+
+.btn-follow:active {
+  background: rgba(200, 170, 110, 0.2);
+}
+
+.post-content {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #C9D1D9;
+  margin: 0 0 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.post-images {
+  display: grid;
+  gap: 4px;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.post-images[data-count="1"] { grid-template-columns: 1fr; }
+.post-images[data-count="2"] { grid-template-columns: repeat(2, 1fr); }
+.post-images[data-count="3"],
+.post-images[data-count="4"] { grid-template-columns: repeat(2, 1fr); }
+
+.img-wrap {
+  position: relative;
+  aspect-ratio: 1;
+  background: #161B22;
+  overflow: hidden;
+}
+
+.post-images[data-count="1"] .img-wrap {
+  aspect-ratio: 16/10;
+}
+
+.img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.img-more {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.post-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.tag-link {
+  font-size: 13px;
+  color: #C8AA6E;
+}
+
+.post-actions {
+  display: flex;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px 6px 0;
+  font-size: 13px;
+  color: #6E7681;
+  background: none;
+  border: none;
+}
+
+.action:active {
+  color: #8B949E;
+}
+
+.action.active {
+  color: #F6465D;
+}
+
+.action svg {
+  width: 20px;
+  height: 20px;
+}
+
+.action:last-child {
+  margin-left: auto;
+  padding-right: 0;
+}
+
+/* ==================== 学习列表 ==================== */
+.learn-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.learn-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  background: linear-gradient(145deg, rgba(30, 38, 50, 0.95), rgba(22, 27, 34, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.learn-card:active {
+  background: rgba(40, 48, 60, 0.95);
+}
+
+.learn-cover {
+  width: 80px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #161B22;
+}
+
+.learn-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.learn-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.learn-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #E6EDF3;
+  line-height: 1.5;
+  margin: 0 0 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.learn-summary {
+  font-size: 12px;
+  color: #8B949E;
+  line-height: 1.4;
+  margin: 0 0 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.learn-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 11px;
+  color: #484F58;
+}
+
+.learn-source {
+  color: #C8AA6E;
+}
+
+.learn-category {
+  padding: 1px 6px;
+  background: rgba(200, 170, 110, 0.1);
+  border-radius: 4px;
+  color: #A08A5B;
+}
+
+.learn-arrow {
+  width: 18px;
+  height: 18px;
+  color: #484F58;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+/* ==================== 空状态 ==================== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.empty-icon svg {
+  width: 48px;
+  height: 48px;
+  color: #21262D;
+}
+
+.empty-state p {
+  font-size: 15px;
+  font-weight: 500;
+  color: #8B949E;
+  margin: 0 0 8px;
+}
+
+.empty-hint {
+  font-size: 13px;
+  color: #484F58;
+  margin-bottom: 24px;
+}
+
+.btn-primary {
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0a0c10;
+  background: linear-gradient(135deg, #C8AA6E 0%, #A08050 100%);
+  border: none;
+  border-radius: 20px;
+}
+
+.btn-primary:active {
+  opacity: 0.9;
+}
+
+/* ==================== 加载更多 ==================== */
+.load-more {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  font-size: 13px;
+  color: #C8AA6E;
+  background: rgba(200, 170, 110, 0.08);
+  border: 1px solid rgba(200, 170, 110, 0.15);
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+.load-more:active {
+  background: rgba(200, 170, 110, 0.15);
+}
+
+/* ==================== FAB ==================== */
+.fab {
+  position: fixed;
+  bottom: calc(90px + env(safe-area-inset-bottom));
+  right: calc(50% - 194px);
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #C8AA6E 0%, #A08050 100%);
+  border: none;
+  border-radius: 14px;
+  color: #0a0c10;
+  box-shadow: 0 4px 16px rgba(200, 170, 110, 0.4);
+  z-index: 99;
+}
+
+.fab:active {
+  transform: scale(0.95);
+}
+
+.fab svg {
+  width: 24px;
+  height: 24px;
+}
+
+@media (max-width: 428px) {
+  .fab {
+    right: 20px;
+  }
+}
+
+/* ==================== 动画效果 ==================== */
+@keyframes postFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes flashSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes hotTagPop {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 帖子卡片渐显动画延迟 */
+.post-card:nth-child(1) { animation-delay: 0s; }
+.post-card:nth-child(2) { animation-delay: 0.08s; }
+.post-card:nth-child(3) { animation-delay: 0.16s; }
+.post-card:nth-child(4) { animation-delay: 0.24s; }
+.post-card:nth-child(5) { animation-delay: 0.32s; }
+.post-card:nth-child(n+6) { animation-delay: 0.4s; }
+
+/* 快讯项动画 */
+.flash-item {
+  animation: flashSlideIn 0.4s ease-out backwards;
+}
+.flash-item:nth-child(1) { animation-delay: 0.1s; }
+.flash-item:nth-child(2) { animation-delay: 0.2s; }
+.flash-item:nth-child(3) { animation-delay: 0.3s; }
+
+/* 热门话题标签动画 */
+.hot-tag {
+  animation: hotTagPop 0.3s ease-out backwards;
+}
+.hot-tag:nth-child(1) { animation-delay: 0.05s; }
+.hot-tag:nth-child(2) { animation-delay: 0.1s; }
+.hot-tag:nth-child(3) { animation-delay: 0.15s; }
+.hot-tag:nth-child(4) { animation-delay: 0.2s; }
+.hot-tag:nth-child(5) { animation-delay: 0.25s; }
+.hot-tag:nth-child(6) { animation-delay: 0.3s; }
+.hot-tag:nth-child(7) { animation-delay: 0.35s; }
+.hot-tag:nth-child(8) { animation-delay: 0.4s; }
+
+.bottom-space {
+  height: calc(80px + env(safe-area-inset-bottom));
+}
+</style>

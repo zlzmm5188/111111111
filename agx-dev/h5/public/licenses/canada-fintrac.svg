@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800">
+  <defs>
+    <linearGradient id="bg3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#faf8f5"/>
+      <stop offset="100%" stop-color="#f0ebe3"/>
+    </linearGradient>
+  </defs>
+  
+  <rect width="600" height="800" fill="url(#bg3)"/>
+  
+  <rect x="20" y="20" width="560" height="760" fill="none" stroke="#d52b1e" stroke-width="4"/>
+  <rect x="26" y="26" width="548" height="748" fill="none" stroke="#d52b1e" stroke-width="1"/>
+  
+  <text x="300" y="55" text-anchor="middle" fill="#d52b1e" font-family="Georgia, serif" font-size="11" letter-spacing="3">GOVERNMENT OF CANADA</text>
+  <text x="300" y="72" text-anchor="middle" fill="#d52b1e" font-family="Georgia, serif" font-size="9" letter-spacing="2">GOUVERNEMENT DU CANADA</text>
+  
+  <path d="M300 90 L306 105 L322 105 L309 115 L314 130 L300 120 L286 130 L291 115 L278 105 L294 105 Z" fill="#d52b1e"/>
+  
+  <text x="300" y="165" text-anchor="middle" fill="#1a1a1a" font-family="Georgia, serif" font-size="18" font-weight="700" letter-spacing="3">FINTRAC</text>
+  <text x="300" y="185" text-anchor="middle" fill="#666" font-family="Arial, sans-serif" font-size="9">Financial Transactions and Reports Analysis Centre of Canada</text>
+  
+  <text x="300" y="230" text-anchor="middle" fill="#1a1a1a" font-family="Georgia, serif" font-size="24" font-weight="700">CERTIFICATE</text>
+  <text x="300" y="255" text-anchor="middle" fill="#1a1a1a" font-family="Georgia, serif" font-size="14">of Registration</text>
+  <text x="300" y="275" text-anchor="middle" fill="#666" font-family="Arial, sans-serif" font-size="11">Money Services Business</text>
+  
+  <rect x="150" y="290" width="300" height="2" fill="#d52b1e"/>
+  
+  <text x="300" y="330" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="12">This is to certify that</text>
+  
+  <text x="300" y="370" text-anchor="middle" fill="#d52b1e" font-family="Georgia, serif" font-size="18" font-weight="700">ASCENDA GLOBAL CANADA INC.</text>
+  
+  <text x="300" y="410" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="11">is registered with FINTRAC as a</text>
+  <text x="300" y="430" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="11">Money Services Business (MSB) pursuant to the</text>
+  <text x="300" y="450" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="11">Proceeds of Crime (Money Laundering) and</text>
+  <text x="300" y="470" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="11">Terrorist Financing Act</text>
+  
+  <rect x="175" y="495" width="250" height="65" fill="rgba(213,43,30,0.05)" rx="5"/>
+  <text x="300" y="520" text-anchor="middle" fill="#666" font-family="Arial, sans-serif" font-size="10">MSB REGISTRATION NUMBER</text>
+  <text x="300" y="548" text-anchor="middle" fill="#d52b1e" font-family="Georgia, serif" font-size="22" font-weight="700">M20478324</text>
+  
+  <text x="300" y="600" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="10">Authorized Services:</text>
+  <text x="300" y="620" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="10">Foreign Exchange Dealing • Money Transferring</text>
+  <text x="300" y="638" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="10">Virtual Currency Exchange</text>
+  
+  <text x="300" y="680" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="11">Registration Date: February 20, 2024</text>
+  
+  <text x="150" y="730" text-anchor="middle" fill="#333" font-family="Brush Script MT, cursive" font-size="15">Sarah Paquet</text>
+  <line x1="80" y1="740" x2="220" y2="740" stroke="#333" stroke-width="1"/>
+  <text x="150" y="755" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="9">Director, FINTRAC</text>
+  
+  <circle cx="450" cy="725" r="32" fill="none" stroke="#d52b1e" stroke-width="2"/>
+  <circle cx="450" cy="725" r="25" fill="none" stroke="#d52b1e" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="450" y="722" text-anchor="middle" fill="#d52b1e" font-family="Arial, sans-serif" font-size="8" font-weight="600">FINTRAC</text>
+  <text x="450" y="734" text-anchor="middle" fill="#d52b1e" font-family="Arial, sans-serif" font-size="7">CANAFE</text>
+</svg>

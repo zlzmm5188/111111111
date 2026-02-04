@@ -1,0 +1,1150 @@
+<template>
+  <div class="contract-page">
+    <!-- 顶部导航 -->
+    <header class="page-header">
+      <button class="back-btn" @click="$router.back()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+      <span class="header-title">短期交割</span>
+      <button class="icon-btn" @click="$router.push('/orders?type=contract')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+          <rect x="9" y="3" width="6" height="4" rx="1"/>
+          <line x1="9" y1="12" x2="15" y2="12"/>
+          <line x1="9" y1="16" x2="13" y2="16"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- 主交易区 -->
+    <div class="main-content">
+      <!-- 交易对信息卡片 -->
+      <div class="pair-card">
+        <div class="pair-left">
+          <div class="pair-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v12M8 10h8M8 14h8"/>
+            </svg>
+          </div>
+          <div class="pair-info">
+            <span class="pair-name">XAU/USD</span>
+            <span class="pair-desc">黄金/美元</span>
+          </div>
+        </div>
+        <div class="pair-right">
+          <span class="pair-price" :class="[priceDirection, { flash: priceFlash }]">{{ formatPrice(currentPrice) }}</span>
+          <span class="pair-change" :class="changeClass">
+            <span class="change-icon">{{ priceChange >= 0 ? '▲' : '▼' }}</span>
+            {{ priceChange >= 0 ? '+' : '' }}{{ Math.abs(priceChange).toFixed(2) }}%
+          </span>
+        </div>
+      </div>
+
+      <!-- K线图表 -->
+      <div class="chart-card">
+        <canvas ref="chartCanvas" class="price-chart"></canvas>
+        <div class="chart-overlay">
+          <span class="chart-high">{{ formatPrice(chartHigh) }}</span>
+          <span class="chart-low">{{ formatPrice(chartLow) }}</span>
+        </div>
+      </div>
+
+      <!-- 交割周期选择 -->
+      <div class="period-section">
+        <div class="section-label">交割周期</div>
+        <div class="period-grid">
+          <button
+            v-for="config in contractConfigs"
+            :key="config.id"
+            class="period-btn"
+            :class="{ active: selectedConfig?.id === config.id }"
+            @click="selectConfig(config)"
+          >
+            <span class="period-time">{{ config.duration }}秒</span>
+            <span class="period-rate">{{ config.profitRatePercent }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 倒计时 -->
+      <div class="countdown-section" v-if="selectedConfig">
+        <div class="countdown-ring">
+          <svg viewBox="0 0 100 100">
+            <circle class="ring-bg" cx="50" cy="50" r="45"/>
+            <circle 
+              class="ring-progress" 
+              cx="50" cy="50" r="45"
+              :style="{ strokeDashoffset: countdownOffset }"
+            />
+          </svg>
+          <div class="countdown-inner">
+            <span class="countdown-num">{{ countdown }}</span>
+            <span class="countdown-unit">秒</span>
+          </div>
+        </div>
+        <div class="countdown-info">
+          <span class="info-label">下一轮交割</span>
+          <span class="info-rate">收益率 <em>{{ selectedConfig.profitRatePercent }}</em></span>
+        </div>
+      </div>
+
+      <!-- 交易方向 -->
+      <div class="direction-section">
+        <button
+          class="dir-btn rise"
+          :class="{ active: direction === 'rise' }"
+          @click="direction = 'rise'"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <polyline points="18,15 12,9 6,15"/>
+          </svg>
+          <span class="dir-text">看涨</span>
+        </button>
+        <button
+          class="dir-btn fall"
+          :class="{ active: direction === 'fall' }"
+          @click="direction = 'fall'"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <polyline points="6,9 12,15 18,9"/>
+          </svg>
+          <span class="dir-text">看跌</span>
+        </button>
+      </div>
+
+      <!-- 金额选择 -->
+      <div class="amount-section">
+        <div class="amount-header">
+          <span class="amount-label">投入金额</span>
+          <span class="amount-balance">余额: {{ formatNumber(balance) }} AGX</span>
+        </div>
+        <div class="amount-grid">
+          <button
+            v-for="amt in amountOptions"
+            :key="amt"
+            class="amount-btn"
+            :class="{ active: amount === amt }"
+            @click="selectAmount(amt)"
+          >{{ amt }}</button>
+        </div>
+        <div class="custom-amount">
+          <input
+            type="number"
+            placeholder="自定义金额"
+            v-model="customAmount"
+            @input="onCustomAmountChange"
+          >
+          <span class="amount-unit">AGX</span>
+        </div>
+      </div>
+
+      <!-- 预期收益 -->
+      <div class="profit-card" v-if="amount > 0 && selectedConfig">
+        <div class="profit-row">
+          <span class="profit-label">预期收益</span>
+          <span class="profit-value up">+{{ calculateProfit().profit }} AGX</span>
+        </div>
+        <div class="profit-row">
+          <span class="profit-label">盈利返还</span>
+          <span class="profit-value">{{ calculateProfit().total }} AGX</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 持仓列表 -->
+    <div class="orders-section" v-if="activeOrders.length > 0">
+      <div class="section-header">
+        <span class="section-title">当前持仓</span>
+        <span class="order-count">{{ activeOrders.length }}</span>
+      </div>
+      <div class="order-list">
+        <div class="order-item" v-for="order in activeOrders" :key="order.id">
+          <div class="order-dir" :class="order.direction === 1 ? 'up' : 'down'">
+            {{ order.direction === 1 ? '涨' : '跌' }}
+          </div>
+          <div class="order-info">
+            <span class="order-amount">{{ order.amount }} AGX</span>
+            <span class="order-time">{{ formatOrderTime(order.createdAt) }}</span>
+          </div>
+          <div class="order-countdown">{{ getOrderCountdown(order) }}s</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 历史记录 -->
+    <div class="history-section">
+      <div class="section-header">
+        <span class="section-title">交易记录</span>
+        <button class="view-all" @click="$router.push('/orders?type=contract')">全部</button>
+      </div>
+      <div class="history-list" v-if="historyOrders.length > 0">
+        <div class="history-item" v-for="item in historyOrders" :key="item.id">
+          <div class="history-dir" :class="item.direction === 1 ? 'up' : 'down'">
+            {{ item.direction === 1 ? '涨' : '跌' }}
+          </div>
+          <div class="history-info">
+            <span class="history-amount">{{ item.amount }} AGX</span>
+            <span class="history-time">{{ formatTime(item.settledAt || item.createdAt) }}</span>
+          </div>
+          <span class="history-result" :class="getResultClass(item)">
+            {{ getResultText(item) }}
+          </span>
+        </div>
+      </div>
+      <div class="empty-state" v-else>
+        <p>暂无交易记录</p>
+      </div>
+    </div>
+
+    <!-- 底部下单 -->
+    <div class="bottom-bar">
+      <button
+        class="submit-btn"
+        :class="{ rise: direction === 'rise', fall: direction === 'fall', disabled: !canPlaceOrder }"
+        :disabled="!canPlaceOrder || orderLoading"
+        @click="placeOrder"
+      >
+        <span v-if="orderLoading">提交中...</span>
+        <span v-else-if="!direction">请选择方向</span>
+        <span v-else-if="!amount">请选择金额</span>
+        <span v-else>{{ direction === 'rise' ? '看涨' : '看跌' }} {{ amount }} AGX</span>
+      </button>
+    </div>
+  </div>
+</template>
+
+<script setup>
+defineOptions({
+  name: 'Contract'
+})
+
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import api from '@/utils/api'
+import { alert, showSuccess, showError } from '@/utils/alert'
+
+const router = useRouter()
+
+// 数据状态
+const contractConfigs = ref([])
+const selectedConfig = ref(null)
+const currentPrice = ref(0)
+const priceChange = ref(0)
+const priceDirection = ref('')
+const priceFlash = ref(false)
+const prevPrice = ref(0)
+const countdown = ref(30)
+const direction = ref('')
+const amount = ref(0)
+const customAmount = ref('')
+const balance = ref(0)
+const activeOrders = ref([])
+const historyOrders = ref([])
+const orderLoading = ref(false)
+
+// 图表
+const chartCanvas = ref(null)
+const priceHistory = ref([])
+const chartHigh = ref(0)
+const chartLow = ref(0)
+
+// 金额选项
+const amountOptions = [10, 50, 100, 500, 1000]
+
+// 定时器
+let priceTimer = null
+let countdownTimer = null
+let orderTimer = null
+
+// 计算属性
+const canPlaceOrder = computed(() => {
+  if (!direction.value || !amount.value || !selectedConfig.value) return false
+  const min = parseFloat(selectedConfig.value.minAmount)
+  const max = parseFloat(selectedConfig.value.maxAmount)
+  return amount.value >= min && amount.value <= max && amount.value <= balance.value
+})
+
+const countdownOffset = computed(() => {
+  if (!selectedConfig.value) return 283
+  const progress = countdown.value / selectedConfig.value.duration
+  return 283 * (1 - progress)
+})
+
+const changeClass = computed(() => {
+  if (priceChange.value > 0) return 'up'
+  if (priceChange.value < 0) return 'down'
+  return 'neutral'
+})
+
+// 方法
+const formatPrice = (price) => {
+  if (!price) return '0.00'
+  return parseFloat(price).toFixed(2)
+}
+
+const formatNumber = (num) => {
+  if (!num) return '0.00'
+  return parseFloat(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+const formatTime = (time) => {
+  if (!time) return ''
+  const d = new Date(time)
+  return `${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`
+}
+
+const formatOrderTime = (time) => {
+  if (!time) return ''
+  const d = new Date(time)
+  return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}`
+}
+
+const selectConfig = (config) => {
+  selectedConfig.value = config
+  countdown.value = config.duration
+}
+
+const selectAmount = (amt) => {
+  amount.value = amt
+  customAmount.value = ''
+}
+
+const onCustomAmountChange = () => {
+  if (customAmount.value) {
+    amount.value = parseFloat(customAmount.value) || 0
+  }
+}
+
+const calculateProfit = () => {
+  if (!amount.value || !selectedConfig.value) return { profit: '0.00', total: '0.00' }
+  const profit = amount.value * parseFloat(selectedConfig.value.profitRate)
+  const total = amount.value + profit
+  return { profit: profit.toFixed(2), total: total.toFixed(2) }
+}
+
+const getResultClass = (order) => {
+  if (order.status === 0) return 'pending'
+  if (order.result === 1) return 'win'
+  if (order.result === 2) return 'lose'
+  return ''
+}
+
+const getResultText = (order) => {
+  if (order.status === 0) return '进行中'
+  if (order.result === 1) return `+${parseFloat(order.profitLoss || 0).toFixed(2)}`
+  if (order.result === 2) return `${parseFloat(order.profitLoss || 0).toFixed(2)}`
+  if (order.result === 3) return '平局'
+  return ''
+}
+
+const getOrderCountdown = (order) => {
+  if (!order.closeAt) return 0
+  const now = Date.now()
+  const close = new Date(order.closeAt).getTime()
+  return Math.max(0, Math.floor((close - now) / 1000))
+}
+
+// API
+const loadConfigs = async () => {
+  try {
+    const res = await api.get('/contract/configs')
+    if (res.code === 0 && res.data?.list) {
+      contractConfigs.value = res.data.list
+      if (res.data.list.length > 0 && !selectedConfig.value) {
+        selectedConfig.value = res.data.list[0]
+        countdown.value = res.data.list[0].duration
+      }
+    }
+  } catch (err) {
+    console.error('加载配置失败:', err)
+  }
+}
+
+const loadBalance = async () => {
+  try {
+    const res = await api.get('/account/balance')
+    if (res.code === 0 && res.data) {
+      const agx = res.data.find?.(a => a.currency === 'AGX') || res.data.agx
+      balance.value = parseFloat(agx?.available || agx || 0)
+    }
+  } catch (err) {
+    console.error('加载余额失败:', err)
+  }
+}
+
+const loadOrders = async () => {
+  try {
+    const activeRes = await api.get('/contract/orders', { params: { status: 0 } })
+    if (activeRes.code === 0) {
+      activeOrders.value = activeRes.data?.list || []
+    }
+    const historyRes = await api.get('/contract/orders')
+    if (historyRes.code === 0) {
+      historyOrders.value = (historyRes.data?.list || []).filter(o => o.status !== 0).slice(0, 5)
+    }
+  } catch (err) {
+    console.error('加载订单失败:', err)
+  }
+}
+
+const updatePrice = async () => {
+  try {
+    const res = await api.get('/market/tickers', { params: { type: 'metal' } })
+    if (res.code === 0 && res.data?.list) {
+      const gold = res.data.list.find(m => m.symbol === 'XAU/USD' || m.symbol === 'XAU' || m.name?.includes('黄金'))
+      if (gold) {
+        const newPrice = parseFloat(gold.lastPrice || gold.price)
+        
+        // 价格变动检测和闪烁
+        if (currentPrice.value > 0 && newPrice !== currentPrice.value) {
+          priceDirection.value = newPrice > currentPrice.value ? 'up' : 'down'
+          priceFlash.value = true
+          setTimeout(() => priceFlash.value = false, 500)
+        }
+        
+        // 保存前一个价格用于计算涨跌
+        if (prevPrice.value === 0) prevPrice.value = newPrice
+        
+        currentPrice.value = newPrice
+        
+        // 优先用API返回的涨跌幅，否则根据历史计算
+        let change = parseFloat(gold.priceChangePercent || gold.changePercent || 0)
+        if (change === 0 && prevPrice.value > 0) {
+          change = ((newPrice - prevPrice.value) / prevPrice.value) * 100
+        }
+        priceChange.value = change
+        
+        priceHistory.value.push(newPrice)
+        if (priceHistory.value.length > 60) priceHistory.value.shift()
+        updateChart()
+      }
+    }
+  } catch (err) {
+    console.error('更新价格失败:', err)
+  }
+}
+
+const updateChart = () => {
+  if (!chartCanvas.value || priceHistory.value.length < 2) return
+  
+  const canvas = chartCanvas.value
+  const ctx = canvas.getContext('2d')
+  const width = canvas.width = canvas.offsetWidth * 2
+  const height = canvas.height = canvas.offsetHeight * 2
+  
+  ctx.clearRect(0, 0, width, height)
+  
+  const prices = priceHistory.value
+  const min = Math.min(...prices)
+  const max = Math.max(...prices)
+  const range = max - min || 1
+  
+  chartHigh.value = max
+  chartLow.value = min
+  
+  const isUp = prices[prices.length - 1] >= prices[0]
+  const color = isUp ? '#0ECB81' : '#F6465D'
+  
+  // 渐变
+  const gradient = ctx.createLinearGradient(0, 0, 0, height)
+  gradient.addColorStop(0, isUp ? 'rgba(14, 203, 129, 0.3)' : 'rgba(246, 70, 93, 0.3)')
+  gradient.addColorStop(1, 'transparent')
+  
+  ctx.beginPath()
+  prices.forEach((price, i) => {
+    const x = (width / (prices.length - 1)) * i
+    const y = height - ((price - min) / range) * height * 0.8 - height * 0.1
+    if (i === 0) ctx.moveTo(x, y)
+    else ctx.lineTo(x, y)
+  })
+  ctx.lineTo(width, height)
+  ctx.lineTo(0, height)
+  ctx.fillStyle = gradient
+  ctx.fill()
+  
+  // 线条
+  ctx.beginPath()
+  prices.forEach((price, i) => {
+    const x = (width / (prices.length - 1)) * i
+    const y = height - ((price - min) / range) * height * 0.8 - height * 0.1
+    if (i === 0) ctx.moveTo(x, y)
+    else ctx.lineTo(x, y)
+  })
+  ctx.strokeStyle = color
+  ctx.lineWidth = 2
+  ctx.stroke()
+}
+
+const placeOrder = async () => {
+  if (!canPlaceOrder.value || orderLoading.value) return
+
+  orderLoading.value = true
+  try {
+    const res = await api.post('/contract/order', {
+      configId: selectedConfig.value.id,
+      amount: amount.value,
+      direction: direction.value === 'rise' ? 1 : 2
+    })
+
+    if (res.code === 0) {
+      showSuccess(`下单成功！方向: ${direction.value === 'rise' ? '看涨' : '看跌'}，金额: ${amount.value} AGX`)
+      direction.value = ''
+      amount.value = 0
+      customAmount.value = ''
+      loadOrders()
+      loadBalance()
+    } else {
+      showError(res.msg || '下单失败')
+    }
+  } catch (err) {
+    showError(err.response?.data?.msg || '网络错误')
+  } finally {
+    orderLoading.value = false
+  }
+}
+
+onMounted(() => {
+  // 级别未达到
+  router.back()
+  alert.show(t('invite.levelRequired'))
+  return
+  
+  loadConfigs()
+  loadBalance()
+  loadOrders()
+  updatePrice()
+  priceTimer = setInterval(updatePrice, 5000)
+  countdownTimer = setInterval(() => {
+    if (countdown.value > 0) countdown.value--
+    else if (selectedConfig.value) countdown.value = selectedConfig.value.duration
+  }, 1000)
+  orderTimer = setInterval(loadOrders, 10000)
+})
+
+onUnmounted(() => {
+  if (priceTimer) clearInterval(priceTimer)
+  if (countdownTimer) clearInterval(countdownTimer)
+  if (orderTimer) clearInterval(orderTimer)
+})
+</script>
+
+<style scoped>
+.contract-page {
+  min-height: 100vh;
+  background: #0B0E11;
+  padding-bottom: 80px;
+}
+
+/* 顶部 */
+.page-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: #0B0E11;
+}
+
+.back-btn, .icon-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #848E9C;
+}
+
+.header-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #EAECEF;
+}
+
+/* 主内容 */
+.main-content {
+  padding: 0 16px;
+}
+
+/* 交易对卡片 */
+.pair-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: linear-gradient(135deg, #1E2329 0%, #161A1E 100%);
+  border-radius: 16px;
+  margin-bottom: 12px;
+}
+
+.pair-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pair-icon {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #F0B90B 0%, #D4A00A 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pair-icon svg {
+  width: 24px;
+  height: 24px;
+  color: #0B0E11;
+}
+
+.pair-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pair-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #EAECEF;
+}
+
+.pair-desc {
+  font-size: 12px;
+  color: #5E6673;
+}
+
+.pair-right {
+  text-align: right;
+}
+
+.pair-price {
+  display: block;
+  font-size: 22px;
+  font-weight: 800;
+  color: #EAECEF;
+  font-family: 'DIN Alternate', monospace;
+}
+
+.pair-price.up { color: #0ECB81; }
+.pair-price.down { color: #F6465D; }
+.pair-price.flash { animation: priceFlash 0.5s ease; }
+
+@keyframes priceFlash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; text-shadow: 0 0 10px currentColor; }
+}
+
+.pair-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  transition: all 0.3s;
+}
+
+.pair-change .change-icon {
+  font-size: 10px;
+}
+
+.pair-change.up {
+  color: #0ECB81;
+  background: rgba(14, 203, 129, 0.15);
+}
+
+.pair-change.down {
+  color: #F6465D;
+  background: rgba(246, 70, 93, 0.15);
+}
+
+.pair-change.neutral {
+  color: #848E9C;
+  background: rgba(132, 142, 156, 0.1);
+}
+
+/* K线图 */
+.chart-card {
+  position: relative;
+  height: 100px;
+  background: #161A1E;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.price-chart {
+  width: 100%;
+  height: 100%;
+}
+
+.chart-overlay {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: monospace;
+}
+
+.chart-high { color: #0ECB81; }
+.chart-low { color: #F6465D; }
+
+/* 交割周期 */
+.period-section {
+  margin-bottom: 20px;
+}
+
+.section-label {
+  font-size: 13px;
+  color: #5E6673;
+  margin-bottom: 10px;
+}
+
+.period-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.period-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  background: #1E2329;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.period-btn.active {
+  background: rgba(240, 185, 11, 0.1);
+  border-color: #F0B90B;
+}
+
+.period-time {
+  font-size: 14px;
+  font-weight: 700;
+  color: #EAECEF;
+}
+
+.period-rate {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0ECB81;
+}
+
+/* 倒计时 */
+.countdown-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(240, 185, 11, 0.1) 0%, rgba(240, 185, 11, 0.02) 100%);
+  border: 1px solid rgba(240, 185, 11, 0.2);
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+
+.countdown-ring {
+  position: relative;
+  width: 70px;
+  height: 70px;
+}
+
+.countdown-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ring-bg {
+  fill: none;
+  stroke: #1E2329;
+  stroke-width: 6;
+}
+
+.ring-progress {
+  fill: none;
+  stroke: #F0B90B;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 283;
+  transition: stroke-dashoffset 1s linear;
+}
+
+.countdown-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.countdown-num {
+  font-size: 22px;
+  font-weight: 800;
+  color: #F0B90B;
+  line-height: 1;
+}
+
+.countdown-unit {
+  font-size: 11px;
+  color: #848E9C;
+}
+
+.countdown-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-label {
+  font-size: 13px;
+  color: #848E9C;
+}
+
+.info-rate {
+  font-size: 14px;
+  color: #EAECEF;
+}
+
+.info-rate em {
+  color: #0ECB81;
+  font-style: normal;
+  font-weight: 700;
+}
+
+/* 方向按钮 */
+.direction-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.dir-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  background: #1E2329;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  transition: all 0.25s;
+}
+
+.dir-btn svg {
+  width: 28px;
+  height: 28px;
+  color: #5E6673;
+}
+
+.dir-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: #848E9C;
+}
+
+.dir-btn.rise.active {
+  background: rgba(14, 203, 129, 0.12);
+  border-color: #0ECB81;
+}
+
+.dir-btn.rise.active svg,
+.dir-btn.rise.active .dir-text {
+  color: #0ECB81;
+}
+
+.dir-btn.fall.active {
+  background: rgba(246, 70, 93, 0.12);
+  border-color: #F6465D;
+}
+
+.dir-btn.fall.active svg,
+.dir-btn.fall.active .dir-text {
+  color: #F6465D;
+}
+
+/* 金额 */
+.amount-section {
+  margin-bottom: 16px;
+}
+
+.amount-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.amount-label {
+  font-size: 13px;
+  color: #5E6673;
+}
+
+.amount-balance {
+  font-size: 12px;
+  color: #0ECB81;
+}
+
+.amount-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.amount-btn {
+  height: 38px;
+  background: #1E2329;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #EAECEF;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.amount-btn.active {
+  background: #F0B90B;
+  color: #0B0E11;
+}
+
+.custom-amount {
+  position: relative;
+}
+
+.custom-amount input {
+  width: 100%;
+  height: 46px;
+  background: #1E2329;
+  border: 1px solid #2B3139;
+  border-radius: 10px;
+  padding: 0 60px 0 14px;
+  color: #EAECEF;
+  font-size: 15px;
+}
+
+.custom-amount input:focus {
+  border-color: #F0B90B;
+  outline: none;
+}
+
+.amount-unit {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  color: #5E6673;
+}
+
+/* 收益卡片 */
+.profit-card {
+  padding: 14px 16px;
+  background: rgba(14, 203, 129, 0.08);
+  border: 1px solid rgba(14, 203, 129, 0.2);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.profit-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.profit-row + .profit-row {
+  margin-top: 8px;
+}
+
+.profit-label {
+  font-size: 13px;
+  color: #848E9C;
+}
+
+.profit-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #EAECEF;
+}
+
+.profit-value.up {
+  color: #0ECB81;
+}
+
+/* 订单列表 */
+.orders-section, .history-section {
+  padding: 0 16px;
+  margin-top: 20px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #EAECEF;
+}
+
+.order-count {
+  background: #F0B90B;
+  color: #0B0E11;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.view-all {
+  font-size: 12px;
+  color: #F0B90B;
+  background: none;
+  border: none;
+}
+
+.order-list, .history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.order-item, .history-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #161A1E;
+  border-radius: 10px;
+}
+
+.order-dir, .history-dir {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.order-dir.up, .history-dir.up {
+  background: rgba(14, 203, 129, 0.15);
+  color: #0ECB81;
+}
+
+.order-dir.down, .history-dir.down {
+  background: rgba(246, 70, 93, 0.15);
+  color: #F6465D;
+}
+
+.order-info, .history-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.order-amount, .history-amount {
+  font-size: 14px;
+  font-weight: 600;
+  color: #EAECEF;
+}
+
+.order-time, .history-time {
+  font-size: 11px;
+  color: #5E6673;
+}
+
+.order-countdown {
+  font-size: 18px;
+  font-weight: 800;
+  color: #F0B90B;
+  font-family: monospace;
+}
+
+.history-result {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.history-result.win { color: #0ECB81; }
+.history-result.lose { color: #F6465D; }
+.history-result.pending { color: #848E9C; }
+
+.empty-state {
+  padding: 30px;
+  text-align: center;
+  background: #161A1E;
+  border-radius: 10px;
+}
+
+.empty-state p {
+  font-size: 13px;
+  color: #5E6673;
+}
+
+/* 底部按钮 */
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  background: #0B0E11;
+  border-top: 1px solid #1E2329;
+}
+
+.submit-btn {
+  width: 100%;
+  height: 50px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+
+.submit-btn.disabled {
+  background: #1E2329;
+  color: #5E6673;
+}
+
+.submit-btn.rise {
+  background: linear-gradient(90deg, #0ECB81, #0AA868);
+  color: #fff;
+}
+
+.submit-btn.fall {
+  background: linear-gradient(90deg, #F6465D, #D73A4D);
+  color: #fff;
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+}
+</style>

@@ -1,0 +1,566 @@
+import { Controller, Post, Get, Put, Body, Query, UseGuards, Req, Param } from '@nestjs/common';
+import { Request } from 'express';
+import { AccountService } from './account.service';
+import { MemberLevelService } from './member-level.service';
+import { RegisterDto, LoginDto, ChangePasswordDto, UpdateProfileDto, SubmitKycDto, WithdrawDto, GetDepositAddressDto, CreateDepositOrderDto, SetTradePasswordDto, ChangeTradePasswordDto, VerifyTradePasswordDto } from './account.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CurrentUser } from '../../common';
+
+@Controller('api/account')
+export class AccountController {
+  constructor(
+    private readonly accountService: AccountService,
+    private readonly memberLevelService: MemberLevelService,
+  ) {}
+
+  /**
+   * 用户注册
+   * POST /api/account/register
+   */
+  @Post('register')
+  async register(@Body() dto: RegisterDto) {
+    return this.accountService.register(dto);
+  }
+
+  /**
+   * 用户登录
+   * POST /api/account/login
+   */
+  @Post('login')
+  async login(@Body() dto: LoginDto, @Req() req: Request) {
+    const ip = req.ip || req.socket.remoteAddress;
+    return this.accountService.login(dto, ip);
+  }
+
+  /**
+   * 获取用户信息
+   * GET /api/account/profile
+   */
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  async getProfile(@CurrentUser('id') userId: number) {
+    return this.accountService.getProfile(userId);
+  }
+
+  /**
+   * 获取用户余额
+   * GET /api/account/balance
+   */
+  @Get('balance')
+  @UseGuards(JwtAuthGuard)
+  async getBalance(@CurrentUser('id') userId: number) {
+    return this.accountService.getBalance(userId);
+  }
+
+  /**
+   * 获取用户三账户资产概览（USDT/AGX/黄金）
+   * GET /api/account/assets/overview
+   */
+  @Get('assets/overview')
+  @UseGuards(JwtAuthGuard)
+  async getAssetsOverview(@CurrentUser('id') userId: number) {
+    return this.accountService.getAssetsOverview(userId);
+  }
+
+  /**
+   * 修改密码
+   * POST /api/account/password
+   */
+  @Post('password')
+  @UseGuards(JwtAuthGuard)
+  async changePassword(@CurrentUser('id') userId: number, @Body() dto: ChangePasswordDto) {
+    return this.accountService.changePassword(userId, dto);
+  }
+
+  /**
+   * 更新用户信息
+   * PUT /api/account/profile
+   */
+  @Put('profile')
+  @UseGuards(JwtAuthGuard)
+  async updateProfile(@CurrentUser('id') userId: number, @Body() dto: UpdateProfileDto) {
+    return this.accountService.updateProfile(userId, dto);
+  }
+
+  /**
+   * 提交KYC认证
+   * POST /api/account/kyc
+   */
+  @Post('kyc')
+  @UseGuards(JwtAuthGuard)
+  async submitKyc(@CurrentUser('id') userId: number, @Body() dto: SubmitKycDto) {
+    return this.accountService.submitKyc(userId, dto);
+  }
+
+  /**
+   * 获取KYC状态
+   * GET /api/account/kyc
+   */
+  @Get('kyc')
+  @UseGuards(JwtAuthGuard)
+  async getKycStatus(@CurrentUser('id') userId: number) {
+    return this.accountService.getKycStatus(userId);
+  }
+
+  /**
+   * 获取充值地址
+   * GET /api/account/deposit/address
+   */
+  @Get('deposit/address')
+  @UseGuards(JwtAuthGuard)
+  async getDepositAddress(@CurrentUser('id') userId: number, @Query() dto: GetDepositAddressDto) {
+    return this.accountService.getDepositAddress(userId, dto);
+  }
+
+  /**
+   * 创建充值订单
+   * POST /api/account/deposit/order
+   */
+  @Post('deposit/order')
+  @UseGuards(JwtAuthGuard)
+  async createDepositOrder(@CurrentUser('id') userId: number, @Body() dto: CreateDepositOrderDto) {
+    return this.accountService.createDepositOrder(userId, dto);
+  }
+
+  /**
+   * 查询充值订单状态
+   * GET /api/account/deposit/order/:orderNo
+   */
+  @Get('deposit/order/:orderNo')
+  @UseGuards(JwtAuthGuard)
+  async getDepositOrderStatus(@CurrentUser('id') userId: number, @Param('orderNo') orderNo: string) {
+    return this.accountService.getDepositOrderStatus(userId, orderNo);
+  }
+
+  /**
+   * 获取充值记录
+   * GET /api/account/deposit/history
+   */
+  @Get('deposit/history')
+  @UseGuards(JwtAuthGuard)
+  async getDepositHistory(@CurrentUser('id') userId: number, @Query() query: any) {
+    return this.accountService.getDepositHistory(userId, query);
+  }
+
+  /**
+   * 申请提现
+   * POST /api/account/withdraw
+   */
+  @Post('withdraw')
+  @UseGuards(JwtAuthGuard)
+  async withdraw(@CurrentUser('id') userId: number, @Body() dto: WithdrawDto) {
+    return this.accountService.withdraw(userId, dto);
+  }
+
+  /**
+   * 获取提现配置（公开接口）
+   * GET /api/account/withdraw/config
+   */
+  @Get('withdraw/config')
+  async getWithdrawConfig() {
+    return this.accountService.getWithdrawConfig();
+  }
+
+  /**
+   * 获取提现记录
+   * GET /api/account/withdraw/history
+   */
+  @Get('withdraw/history')
+  @UseGuards(JwtAuthGuard)
+  async getWithdrawHistory(@CurrentUser('id') userId: number, @Query() query: any) {
+    return this.accountService.getWithdrawHistory(userId, query);
+  }
+
+  /**
+   * 获取邀请列表
+   * GET /api/account/invites
+   */
+  @Get('invites')
+  @UseGuards(JwtAuthGuard)
+  async getInviteList(@CurrentUser('id') userId: number, @Query() query: any) {
+    return this.accountService.getInviteList(userId, query);
+  }
+
+  /**
+   * 获取邀请统计
+   * GET /api/account/invite/stats
+   */
+  @Get('invite/stats')
+  @UseGuards(JwtAuthGuard)
+  async getInviteStats(@CurrentUser('id') userId: number) {
+    return this.accountService.getInviteStats(userId);
+  }
+
+  /**
+   * 获取公告列表（无需登录）
+   * GET /api/account/notices
+   */
+  @Get('notices')
+  async getNotices() {
+    return this.accountService.getActiveNotices();
+  }
+
+  /**
+   * 设置交易密码
+   * POST /api/account/trade-password
+   */
+  @Post('trade-password')
+  @UseGuards(JwtAuthGuard)
+  async setTradePassword(@CurrentUser('id') userId: number, @Body() dto: SetTradePasswordDto) {
+    return this.accountService.setTradePassword(userId, dto);
+  }
+
+  /**
+   * 修改交易密码
+   * PUT /api/account/trade-password
+   */
+  @Put('trade-password')
+  @UseGuards(JwtAuthGuard)
+  async changeTradePassword(@CurrentUser('id') userId: number, @Body() dto: ChangeTradePasswordDto) {
+    return this.accountService.changeTradePassword(userId, dto);
+  }
+
+  /**
+   * 验证交易密码
+   * POST /api/account/trade-password/verify
+   */
+  @Post('trade-password/verify')
+  @UseGuards(JwtAuthGuard)
+  async verifyTradePassword(@CurrentUser('id') userId: number, @Body() dto: VerifyTradePasswordDto) {
+    return this.accountService.verifyTradePassword(userId, dto);
+  }
+
+  /**
+   * 获取交易密码状态
+   * GET /api/account/trade-password/status
+   */
+  @Get('trade-password/status')
+  @UseGuards(JwtAuthGuard)
+  async getTradePasswordStatus(@CurrentUser('id') userId: number) {
+    return this.accountService.getTradePasswordStatus(userId);
+  }
+
+  // ===== 会员等级相关 =====
+
+  /**
+   * 获取所有会员等级配置
+   * GET /api/account/member-levels
+   */
+  @Get('member-levels')
+  async getMemberLevels() {
+    const levels = await this.memberLevelService.getAllLevels();
+    return {
+      success: true, code: 0, data: levels };
+  }
+
+  /**
+   * 获取当前用户等级信息
+   * GET /api/account/my-level
+   */
+  @Get('my-level')
+  @UseGuards(JwtAuthGuard)
+  async getMyLevel(@CurrentUser('id') userId: number) {
+    const levelInfo = await this.memberLevelService.getUserLevelInfo(userId);
+    return {
+      success: true, code: 0, data: levelInfo };
+  }
+
+  /**
+   * 获取资产日志
+   * GET /api/account/asset/logs
+   */
+  @Get('asset/logs')
+  @UseGuards(JwtAuthGuard)
+  async getAssetLogs(
+    @CurrentUser('id') userId: number,
+    @Query() query: any,
+  ) {
+    return this.accountService.getAssetLogs(userId, query);
+  }
+
+  /**
+   * 测试接口 - 返回测试资产数据（无需登录）
+   * GET /api/account/test-balance
+   */
+  @Get('test-balance')
+  async testBalance() {
+    const testAssets = [
+      {
+        symbol: 'USDT',
+        name: 'Tether USD',
+        balance: '1000.00',
+        usdValue: '1000.00',
+        value: '1000.00',
+        available: '1000.00',
+        amount: '1000.00',
+        locked: '0.00',
+        icon: '',
+        price: '1.00',
+        accountType: 'spot',
+        currency: 'USDT',
+        coin: 'USDT',
+      },
+      {
+        symbol: 'AGX',
+        name: 'Ascenda Gold Index',
+        balance: '5000.00',
+        usdValue: '500.00',
+        value: '500.00',
+        available: '5000.00',
+        amount: '5000.00',
+        locked: '0.00',
+        icon: '',
+        price: '0.10',
+        accountType: 'spot',
+        currency: 'AGX',
+        coin: 'AGX',
+      }
+    ];
+
+    return {
+      success: true,
+      code: 0,
+      message: '测试数据',
+      data: {
+        list: testAssets,
+        assets: testAssets,
+        balances: testAssets,
+        totalUsdValue: '1500.00'
+      },
+      timestamp: Date.now()
+    };
+  }
+
+  /**
+   * 调试接口 - 检查系统状态
+   * GET /api/account/debug
+   */
+  @Get('debug')
+  async debug() {
+    return {
+      success: true,
+      code: 0,
+      message: '系统调试信息',
+      data: {
+        timestamp: Date.now(),
+        issues: [
+          { id: 1, name: '实名认证自拍照bug', status: '待修复' },
+          { id: 2, name: '个人头像无法更改', status: '待修复' },
+          { id: 3, name: '矿机购买扣款问题', status: '待修复' },
+          { id: 4, name: 'USDT/AGX价值显示', status: '已修复' },
+          { id: 5, name: '邀请关系数据导出', status: '待开发' }
+        ],
+        system: {
+          backend: '运行中',
+          frontend: '运行中',
+          database: '运行中'
+        }
+      },
+      timestamp: Date.now()
+    };
+  }
+
+  /**
+   * 测试头像上传
+   * POST /api/account/test-avatar
+   */
+  @Post('test-avatar')
+  async testAvatar(@Body() dto: any) {
+    // 模拟头像更新
+    return {
+      success: true,
+      code: 0,
+      message: '头像测试接口',
+      data: {
+        avatar: dto.avatar || 'https://example.com/test-avatar.jpg',
+        updated: true
+      },
+      timestamp: Date.now()
+    };
+  }
+}
+  /**
+   * 测试KYC图片上传（无需登录）
+   * POST /api/account/test-kyc-upload
+   */
+  @Post('test-kyc-upload')
+  async testKycUpload(@Body() body: any) {
+    // 模拟KYC上传过程
+    const { imageType, imageData } = body;
+    
+    // 检查图片数据
+    if (!imageData) {
+      return {
+        success: false,
+        code: 4001,
+        message: '图片数据不能为空',
+        data: null,
+        timestamp: Date.now()
+      };
+    }
+    
+    // 模拟图片上传成功
+    const imageUrl = ;
+    
+    return {
+      success: true,
+      code: 0,
+      message: 'KYC图片上传测试成功',
+      data: {
+        imageType: imageType || 'selfie',
+        imageUrl: imageUrl,
+        uploaded: true,
+        validated: true,
+        fileSize: imageData.length || 1024,
+        mimeType: 'image/jpeg'
+      },
+      timestamp: Date.now()
+    };
+  }
+
+  /**
+   * 测试完整的KYC提交（无需登录）
+   * POST /api/account/test-kyc-submit
+   */
+  @Post('test-kyc-submit')
+  async testKycSubmit(@Body() body: any) {
+    const { realName, idNumber, frontImage, holdImage } = body;
+    
+    // 模拟KYC提交验证
+    const errors = [];
+    
+    if (!realName || realName.trim().length < 2) {
+      errors.push('真实姓名至少2个字符');
+    }
+    
+    if (!idNumber || len(idNumber) < 15) {
+      errors.push('证件号码格式不正确');
+    }
+    
+    if (!frontImage) {
+      errors.push('身份证正面照不能为空');
+    }
+    
+    if (!holdImage) {
+      errors.push('手持身份证自拍照不能为空');
+    }
+    
+    if (errors.length > 0) {
+      return {
+        success: false,
+        code: 4002,
+        message: 'KYC提交验证失败',
+        data: { errors },
+        timestamp: Date.now()
+      };
+    }
+    
+    // 模拟KYC提交成功
+    return {
+      success: true,
+      code: 0,
+      message: 'KYC提交测试成功',
+      data: {
+        kycId: Date.now(),
+        realName: realName,
+        idNumber: idNumber.substring(0, 4) + '********' + idNumber.substring(-4),
+        status: 'pending',
+        submittedAt: new Date(),
+        estimatedReviewTime: '1-3个工作日'
+      },
+      timestamp: Date.now()
+    };
+  
+  /**
+   * 测试KYC图片上传（无需登录）
+   * POST /api/account/test-kyc-upload
+   */
+  @Post('test-kyc-upload')
+  async testKycUpload(@Body() body: any) {
+    // 模拟KYC上传过程
+    const { imageType, imageData } = body;
+    
+    // 检查图片数据
+    if (!imageData) {
+      return {
+        success: false,
+        code: 4001,
+        message: '图片数据不能为空',
+        data: null,
+        timestamp: Date.now()
+      };
+    }
+    
+    // 模拟图片上传成功
+    const imageUrl = ;
+    
+    return {
+      success: true,
+      code: 0,
+      message: 'KYC图片上传测试成功',
+      data: {
+        imageType: imageType || 'selfie',
+        imageUrl: imageUrl,
+        uploaded: true,
+        validated: true,
+        fileSize: imageData.length || 1024,
+        mimeType: 'image/jpeg'
+      },
+      timestamp: Date.now()
+    };
+  }
+
+  /**
+   * 测试完整的KYC提交（无需登录）
+   * POST /api/account/test-kyc-submit
+   */
+  @Post('test-kyc-submit')
+  async testKycSubmit(@Body() body: any) {
+    const { realName, idNumber, frontImage, holdImage } = body;
+    
+    // 模拟KYC提交验证
+    const errors = [];
+    
+    if (!realName || realName.trim().length < 2) {
+      errors.push('真实姓名至少2个字符');
+    }
+    
+    if (!idNumber || idNumber.length < 15) {
+      errors.push('证件号码格式不正确');
+    }
+    
+    if (!frontImage) {
+      errors.push('身份证正面照不能为空');
+    }
+    
+    if (!holdImage) {
+      errors.push('手持身份证自拍照不能为空');
+    }
+    
+    if (errors.length > 0) {
+      return {
+        success: false,
+        code: 4002,
+        message: 'KYC提交验证失败',
+        data: { errors },
+        timestamp: Date.now()
+      };
+    }
+    
+    // 模拟KYC提交成功
+    return {
+      success: true,
+      code: 0,
+      message: 'KYC提交测试成功',
+      data: {
+        kycId: Date.now(),
+        realName: realName,
+        idNumber: idNumber.substring(0, 4) + '********' + idNumber.substring(idNumber.length - 4),
+        status: 'pending',
+        submittedAt: new Date(),
+        estimatedReviewTime: '1-3个工作日'
+      },
+      timestamp: Date.now()
+    };
+  }
+}

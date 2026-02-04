@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800">
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff8f0"/>
+      <stop offset="100%" stop-color="#f5ebe0"/>
+    </linearGradient>
+  </defs>
+  
+  <rect width="600" height="800" fill="url(#bg2)"/>
+  
+  <rect x="20" y="20" width="560" height="760" fill="none" stroke="#c41e3a" stroke-width="4"/>
+  <rect x="28" y="28" width="544" height="744" fill="none" stroke="#c41e3a" stroke-width="1"/>
+  
+  <circle cx="300" cy="90" r="40" fill="none" stroke="#c41e3a" stroke-width="2"/>
+  <circle cx="300" cy="90" r="32" fill="none" stroke="#c41e3a" stroke-width="1"/>
+  <text x="300" y="85" text-anchor="middle" fill="#c41e3a" font-family="Georgia, serif" font-size="10" font-weight="700">MAS</text>
+  <text x="300" y="98" text-anchor="middle" fill="#c41e3a" font-family="Arial, sans-serif" font-size="7">SINGAPORE</text>
+  
+  <text x="300" y="160" text-anchor="middle" fill="#c41e3a" font-family="Georgia, serif" font-size="16" font-weight="700" letter-spacing="2">MONETARY AUTHORITY OF SINGAPORE</text>
+  
+  <text x="300" y="210" text-anchor="middle" fill="#1a1a1a" font-family="Georgia, serif" font-size="28" font-weight="700">LICENSE</text>
+  <text x="300" y="240" text-anchor="middle" fill="#666" font-family="Arial, sans-serif" font-size="13">Payment Services Act 2019</text>
+  
+  <rect x="200" y="260" width="200" height="3" fill="#c41e3a"/>
+  
+  <text x="300" y="300" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="12">The Monetary Authority of Singapore hereby grants</text>
+  
+  <text x="300" y="345" text-anchor="middle" fill="#c41e3a" font-family="Georgia, serif" font-size="20" font-weight="700">ASCENDA GLOBAL PTE. LTD.</text>
+  
+  <text x="300" y="385" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="11">a license to carry on a business of providing</text>
+  <text x="300" y="405" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="11">the following payment services in Singapore:</text>
+  
+  <rect x="130" y="430" width="340" height="90" fill="rgba(196,30,58,0.05)" rx="8"/>
+  <text x="150" y="460" fill="#1a1a1a" font-family="Arial, sans-serif" font-size="11">• Digital Payment Token Service</text>
+  <text x="150" y="483" fill="#1a1a1a" font-family="Arial, sans-serif" font-size="11">• Cross-border Money Transfer Service</text>
+  <text x="150" y="506" fill="#1a1a1a" font-family="Arial, sans-serif" font-size="11">• E-money Issuance Service</text>
+  
+  <text x="300" y="560" text-anchor="middle" fill="#666" font-family="Arial, sans-serif" font-size="10">LICENSE NUMBER</text>
+  <text x="300" y="590" text-anchor="middle" fill="#c41e3a" font-family="Georgia, serif" font-size="22" font-weight="700">PS20200001122</text>
+  
+  <text x="300" y="640" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="11">Issue Date: March 1, 2024</text>
+  <text x="300" y="660" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="11">Valid Until: February 28, 2027</text>
+  
+  <text x="150" y="720" text-anchor="middle" fill="#333" font-family="Brush Script MT, cursive" font-size="16">Chia Der Jiun</text>
+  <line x1="80" y1="730" x2="220" y2="730" stroke="#333" stroke-width="1"/>
+  <text x="150" y="745" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="9">Managing Director, MAS</text>
+  
+  <circle cx="450" cy="715" r="32" fill="none" stroke="#c41e3a" stroke-width="2"/>
+  <circle cx="450" cy="715" r="25" fill="none" stroke="#c41e3a" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="450" y="712" text-anchor="middle" fill="#c41e3a" font-family="Arial, sans-serif" font-size="8" font-weight="600">MAS</text>
+  <text x="450" y="724" text-anchor="middle" fill="#c41e3a" font-family="Arial, sans-serif" font-size="7">OFFICIAL</text>
+</svg>

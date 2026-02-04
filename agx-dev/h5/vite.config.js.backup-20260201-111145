@@ -1,0 +1,166 @@
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import path from 'path'
+import obfuscatorPlugin from 'rollup-plugin-obfuscator'
+import { visualizer } from 'rollup-plugin-visualizer'
+import viteCompression from 'vite-plugin-compression'
+
+const isProduction = process.env.NODE_ENV === 'production'
+
+// 混淆配置
+const obfuscatorOptions = {
+  compact: true,
+  controlFlowFlattening: true,
+  controlFlowFlatteningThreshold: 0.5,
+  deadCodeInjection: false,
+  debugProtection: false,
+  disableConsoleOutput: true,
+  identifierNamesGenerator: 'hexadecimal',
+  log: false,
+  numbersToExpressions: true,
+  renameGlobals: false,
+  selfDefending: false,
+  simplify: true,
+  stringArray: true,
+  stringArrayCallsTransform: true,
+  stringArrayEncoding: ['base64'],
+  stringArrayIndexShift: true,
+  stringArrayRotate: true,
+  stringArrayShuffle: true,
+  stringArrayThreshold: 0.5,
+  transformObjectKeys: false,
+  unicodeEscapeSequence: false,
+}
+
+export default defineConfig({
+  plugins: [
+    vue(),
+    // Gzip 压缩
+    viteCompression({
+      verbose: true,
+      disable: false,
+      threshold: 10240,
+      algorithm: 'gzip',
+      ext: '.gz',
+    }),
+    // Brotli 压缩
+    viteCompression({
+      verbose: true,
+      disable: false,
+      threshold: 10240,
+      algorithm: 'brotliCompress',
+      ext: '.br',
+    }),
+    // 打包分析（生产环境）
+    isProduction && visualizer({
+      open: false,
+      gzipSize: true,
+      brotliSize: true,
+      filename: 'dist/stats.html',
+    }),
+  ],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src')
+    }
+  },
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true
+      }
+    }
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    minify: 'terser',
+    // Terser 压缩配置
+    terserOptions: {
+      compress: {
+        drop_console: isProduction, // 生产环境移除 console
+        drop_debugger: isProduction,
+        pure_funcs: isProduction ? ['console.log', 'console.info'] : [],
+      },
+    },
+    // 启用代码分割优化性能
+    rollupOptions: {
+      output: {
+        // 更精细的代码分割
+        manualChunks: (id) => {
+          // node_modules 中的包
+          if (id.includes('node_modules')) {
+            // Vue 生态
+            if (id.includes('vue') || id.includes('pinia') || id.includes('@vue')) {
+              return 'vendor-vue'
+            }
+            // 路由
+            if (id.includes('vue-router')) {
+              return 'vendor-router'
+            }
+            // UI 组件
+            if (id.includes('lightweight-charts')) {
+              return 'vendor-charts'
+            }
+            // HTTP 客户端
+            if (id.includes('axios')) {
+              return 'vendor-http'
+            }
+            // WebSocket
+            if (id.includes('socket.io')) {
+              return 'vendor-socket'
+            }
+            // Sentry
+            if (id.includes('@sentry')) {
+              return 'vendor-sentry'
+            }
+            // 其他第三方库
+            return 'vendor-utils'
+          }
+        },
+        // 设置chunk文件名格式
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: (assetInfo) => {
+          const info = assetInfo.name.split('.')
+          const ext = info[info.length - 1]
+          if (/\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/i.test(assetInfo.name)) {
+            return `assets/media/[name]-[hash].[ext]`
+          }
+          if (/\.(png|jpe?g|gif|svg|ico|webp)(\?.*)?$/i.test(assetInfo.name)) {
+            return `assets/img/[name]-[hash].[ext]`
+          }
+          if (/\.(woff2?|eot|ttf|otf)(\?.*)?$/i.test(assetInfo.name)) {
+            return `assets/fonts/[name]-[hash].[ext]`
+          }
+          return `assets/[ext]/[name]-[hash].[ext]`
+        },
+      },
+    },
+    // 启用源码映射便于调试（生产环境可以关闭）
+    sourcemap: isProduction ? false : 'eval',
+    // 设置chunk大小警告阈值
+    chunkSizeWarningLimit: 500,
+    // CSS 代码分割
+    cssCodeSplit: true,
+    // 预构建配置
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    },
+  },
+  // 优化依赖预构建
+  optimizeDeps: {
+    include: [
+      'vue',
+      'vue-router',
+      'pinia',
+      'axios',
+      'socket.io-client',
+      'lightweight-charts',
+    ],
+    exclude: [],
+  },
+})

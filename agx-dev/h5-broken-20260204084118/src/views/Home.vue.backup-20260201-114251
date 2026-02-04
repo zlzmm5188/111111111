@@ -1,0 +1,1749 @@
+<template>
+  <div class="home-page">
+    <!-- 公告栏 - 固定在顶部 -->
+    <div class="notice-bar">
+      <span class="notice-icon">
+        <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
+          <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M10 6v5M10 13v1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <div class="notice-scroll">
+        <span class="notice-text">{{ $t('home.notice') }}</span>
+      </div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+
+    <!-- 可滚动内容区域 -->
+    <div class="page-content px-page">
+
+    <!-- Banner卡片区域 - 两个独立卡片 -->
+    <!-- 卡片1: 黄金储备Banner - 轮播 -->
+    <div class="banner-card banner-gold">
+      <div class="slide-bg"></div>
+      <div class="slide-content">
+        <div class="slide-left">
+          <div class="slide-text">
+            <div class="slide-badge">{{ bannerData[bannerSlide].badge }}</div>
+            <h2 class="slide-title">{{ bannerData[bannerSlide].title }}</h2>
+            <p class="slide-desc">{{ bannerData[bannerSlide].desc }}</p>
+          </div>
+        </div>
+        <div class="slide-right">
+          <div class="price-card">
+            <span class="price-value" :class="[goldData.change >= 0 ? 'up' : 'down', { 'price-tick': priceTicking }]">
+              ${{ goldDisplayPrice }}
+            </span>
+            <span class="price-change" :class="[displayChange >= 0 ? 'up' : 'down', { 'change-pulse': changeTicking }]">
+              {{ displayChange >= 0 ? '+' : '' }}{{ displayChange }}%
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 卡片2: AGXAGX发行 -->
+    <router-link to="/agx-intro" class="banner-card banner-launch">
+      <div class="launch-header">
+        <div class="launch-icon">
+          <img src="/agx-new.png" alt="AGX" @error="handleImgError">
+        </div>
+        <div class="launch-info">
+          <div class="launch-title">{{ $t('home.launchTitle') }} <span class="new-tag">{{ $t('common.new') }}</span></div>
+          <div class="launch-subtitle">{{ $t('home.launchPrice') }} <span>$0.065</span></div>
+        </div>
+      </div>
+      <div class="launch-countdown">
+        <div class="cd-item"><div class="cd-num">{{ countdown.days }}</div><span class="cd-label">{{ $t('time.day') }}</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-item"><div class="cd-num">{{ countdown.hours }}</div><span class="cd-label">{{ $t('time.hour') }}</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-item"><div class="cd-num">{{ countdown.mins }}</div><span class="cd-label">{{ $t('time.minute') }}</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-item"><div class="cd-num" :class="{ tick: flipState.secs }">{{ countdown.secs }}</div><span class="cd-label">{{ $t('time.second') }}</span></div>
+      </div>
+      <div class="launch-footer">{{ $t('home.launchCountdown') }}</div>
+    </router-link>
+
+    <!-- 行情板块 - 整体容器 -->
+    <div class="market-block">
+      <!-- 上部: 行情卡片 -->
+      <transition name="ticker-fade" mode="out-in">
+        <div class="market-top" :key="currentTickerType">
+          <router-link 
+            v-for="(item, index) in currentTickerData" 
+            :key="item.symbol" 
+            :to="item.link || `/trade?pair=${item.symbol}_USDT`" 
+            class="ticker-card"
+          >
+            <div class="ticker-header">
+              <img v-if="item.flag" :src="item.flag" class="ticker-flag" :alt="item.symbol" loading="lazy">
+              <img v-else :src="item.icon" class="ticker-icon" :alt="item.symbol" loading="lazy">
+              <div class="ticker-name">{{ item.symbol }}</div>
+            </div>
+            <div class="ticker-price">{{ item.price }}</div>
+            <div class="ticker-change" :class="item.change >= 0 ? 'up' : 'down'">
+              {{ item.change >= 0 ? '+' : '' }}{{ item.change }}%
+            </div>
+          </router-link>
+        </div>
+      </transition>
+      <!-- 下部: 黄金卡片 -->
+      <router-link to="/gold" class="market-bottom">
+        <div class="gold-left">
+          <img src="/gold-bar.png" alt="Gold" class="gold-icon" loading="lazy" style="border-radius: 4px;">
+          <div class="gold-info">
+            <span class="gold-name">{{ goldData.name }}</span>
+            <span class="gold-sub">{{ goldData.desc }}</span>
+          </div>
+        </div>
+        <div class="gold-right">
+          <span class="gold-price" :class="[goldData.change >= 0 ? 'up' : 'down', { 'price-tick': priceTicking }]">
+            ${{ goldDisplayPrice }}
+          </span>
+          <span class="gold-change" :class="[displayChange >= 0 ? 'up' : 'down', { 'change-pulse': changeTicking }]">
+            {{ displayChange >= 0 ? '+' : '' }}{{ displayChange }}%
+          </span>
+        </div>
+      </router-link>
+    </div>
+
+    <!-- 快捷功能 -->
+    <section class="quick-section">
+      <div class="quick-grid">
+        <!-- AGX - 钻石图标 -->
+        <router-link to="/ieo" class="quick-item">
+          <div class="quick-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M12 3L4 9l8 12 8-12-8-6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+              <path d="M4 9h16" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M8.5 9L12 21l3.5-12" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span>{{ $t('home.newCoin') }}</span>
+        </router-link>
+        <!-- 现货 - 蜡烛图标 -->
+        <router-link to="/trade" class="quick-item">
+          <div class="quick-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M6 4v16M6 6h0M6 18h0" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+              <rect x="4" y="8" width="4" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M18 4v16M18 4h0M18 20h0" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+              <rect x="16" y="6" width="4" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M12 8v8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+              <rect x="10" y="10" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <span>{{ $t('home.spot') }}</span>
+        </router-link>
+        <!-- 合约 - 闪电图标 -->
+        <router-link to="/contract" class="quick-item">
+          <div class="quick-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span>{{ $t('home.contract') }}</span>
+        </router-link>
+        <!-- 黄金 - 金块图标 -->
+        <router-link to="/gold" class="quick-item">
+          <div class="quick-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 17l2-7h12l2 7H4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+              <path d="M6 10l1.5-4h9L18 10" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+              <path d="M8 14h8M9 17h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span>{{ $t('home.gold') }}</span>
+        </router-link>
+        <!-- 矿机 - 增长图标 -->
+        <router-link to="/pool" class="quick-item">
+          <div class="quick-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M12 8v4l2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8 5l-1.5-1.5M16 5l1.5-1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span>{{ $t('home.finance') }}</span>
+        </router-link>
+        <!-- 跟单 - 复制图标 -->
+        <router-link to="/copy-trade" class="quick-item">
+          <div class="quick-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M16 3H4v13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <rect x="8" y="7" width="12" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M12 12h4M12 16h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span>{{ $t('home.copyTrade') }}</span>
+        </router-link>
+        <!-- OTC - 交换图标 -->
+        <router-link to="/otc" class="quick-item">
+          <div class="quick-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="6" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/>
+              <circle cx="18" cy="18" r="3" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M15 6h3v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 18H6v-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M18 6l-6 6M6 18l6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span>{{ $t('home.otc') }}</span>
+        </router-link>
+        <!-- AI助手 - 智能图标 -->
+        <router-link to="/ai" class="quick-item">
+          <div class="quick-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <rect x="5" y="7" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
+              <circle cx="9" cy="12" r="1.5" stroke="currentColor" stroke-width="1.2"/>
+              <circle cx="15" cy="12" r="1.5" stroke="currentColor" stroke-width="1.2"/>
+              <path d="M10 16h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M12 7V4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M9 4h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M3 11v2M21 11v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span>{{ $t('home.aiAssistant') }}</span>
+        </router-link>
+      </div>
+    </section>
+
+    <!-- 热门行情 -->
+    <section class="market-section">
+      <div class="market-list">
+        <!-- 骨架屏 -->
+        <template v-if="isLoading">
+          <div class="market-item skeleton" v-for="i in 5" :key="'sk-'+i">
+            <span class="market-rank skeleton-box"></span>
+            <div class="market-icon skeleton-box"></div>
+            <div class="market-info">
+              <span class="skeleton-text w60"></span>
+              <span class="skeleton-text w40"></span>
+            </div>
+            <div class="market-price">
+              <span class="skeleton-text w50"></span>
+              <span class="skeleton-text w30"></span>
+            </div>
+          </div>
+        </template>
+        <!-- 实际数据 -->
+        <router-link 
+          v-else
+          v-for="(coin, index) in marketCoins" 
+          :key="coin.symbol" 
+          :to="`/trade?pair=${coin.symbol}_USDT`"
+          class="market-item"
+        >
+          <span class="market-rank" :class="{ top: index < 3 }">{{ index + 1 }}</span>
+          <img :src="coin.icon" class="market-icon" :alt="coin.symbol" loading="lazy">
+          <div class="market-info">
+            <span class="market-name">{{ coin.symbol }}<small>/USDT</small></span>
+            <span class="market-vol">Vol {{ coin.volume }}</span>
+          </div>
+          <div class="market-price">
+            <span class="price-val">${{ coin.price }}</span>
+            <span class="price-change" :class="coin.change >= 0 ? 'up' : 'down'">
+              {{ coin.change >= 0 ? '+' : '' }}{{ coin.change }}%
+            </span>
+          </div>
+        </router-link>
+      </div>
+    </section>
+    </div>
+  </div>
+</template>
+
+<script setup>
+defineOptions({
+  name: 'Home'
+})
+
+import { ref, onMounted, onUnmounted, onActivated, onDeactivated, computed, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
+import api from '../utils/api'
+
+const { t } = useI18n()
+
+const countdown = ref({ days: '00', hours: '00', mins: '00', secs: '00' })
+const prevCountdown = ref({ days: '00', hours: '00', mins: '00', secs: '00' })
+const flipState = ref({ days: false, hours: false, mins: false, secs: false })
+const isLoading = ref(true)
+
+const hotCoins = ref([
+  { symbol: 'BTC', price: '$99,870.88', change: 2.41, icon: '/crypto/btc.png' },
+  { symbol: 'ETH', price: '$3,572.15', change: 3.54, icon: '/crypto/eth.png' },
+  { symbol: 'SOL', price: '$186.06', change: -1.03, icon: '/crypto/sol.png' }
+])
+
+// 更多加密货币
+const moreCrypto = ref([
+  { symbol: 'BNB', price: '$715.50', change: 1.28, icon: '/crypto/bnb.png' },
+  { symbol: 'XRP', price: '$2.35', change: 5.67, icon: '/crypto/xrp.png' },
+  { symbol: 'ADA', price: '$0.92', change: -0.85, icon: '/crypto/ada.png' }
+])
+
+const moreCrypto2 = ref([
+  { symbol: 'DOGE', price: '$0.168', change: 3.22, icon: '/crypto/doge.png' },
+  { symbol: 'DOT', price: '$8.45', change: -1.56, icon: '/crypto/dot.png' },
+  { symbol: 'AVAX', price: '$42.30', change: 2.89, icon: '/crypto/avax.png' }
+])
+
+// 外汇数据
+const forexData = ref([
+  { symbol: 'EUR/USD', price: '$1.0875', change: 0.15, flag: 'https://flagcdn.com/w40/eu.png' },
+  { symbol: 'GBP/USD', price: '$1.2650', change: -0.22, flag: 'https://flagcdn.com/w40/gb.png' },
+  { symbol: 'USD/JPY', price: '¥145.80', change: 0.35, flag: 'https://flagcdn.com/w40/jp.png' }
+])
+
+const forexData2 = ref([
+  { symbol: 'AUD/USD', price: '$0.6580', change: -0.45, flag: 'https://flagcdn.com/w40/au.png' },
+  { symbol: 'USD/CAD', price: '$1.3650', change: 0.28, flag: 'https://flagcdn.com/w40/ca.png' },
+  { symbol: 'USD/CHF', price: '$0.8920', change: -0.18, flag: 'https://flagcdn.com/w40/ch.png' }
+])
+
+// 所有行情数据轮播
+const allTickerData = [
+  () => hotCoins.value,
+  () => moreCrypto.value,
+  () => forexData.value,
+  () => moreCrypto2.value,
+  () => forexData2.value
+]
+
+// 当前显示类型索引
+const currentTickerType = ref(0)
+const currentTickerData = computed(() => {
+  return allTickerData[currentTickerType.value]()
+})
+
+const marketCoins = ref([
+  { symbol: 'BTC', price: '99,870.88', change: 2.41, volume: '12.5K', icon: '/crypto/btc.png' },
+  { symbol: 'ETH', price: '3,572.15', change: 3.54, volume: '85.2K', icon: '/crypto/eth.png' },
+  { symbol: 'SOL', price: '186.06', change: -1.03, volume: '25.8K', icon: '/crypto/sol.png' },
+  { symbol: 'BNB', price: '715.50', change: 1.28, volume: '18.3K', icon: '/crypto/bnb.png' },
+  { symbol: 'XRP', price: '2.35', change: 5.67, volume: '156.7K', icon: '/crypto/xrp.png' }
+])
+
+// 黄金现货数据
+const goldData = ref({
+  name: '',
+  desc: '',
+  price: '2,650.00',
+  change: 0.35
+})
+
+// 金价显示价格（带小数跳动效果）
+const goldDisplayPrice = ref('2,650.00')
+const priceTicking = ref(false)
+const changeTicking = ref(false)
+const displayChange = ref(0.35)
+
+// Banner轮播数据 - 使用computed实现响应式i18n
+const bannerSlide = ref(0)
+const bannerData = computed(() => [
+  {
+    badge: t('banner.badge1'),
+    title: t('banner.title1'),
+    desc: t('banner.desc1')
+  },
+  {
+    badge: t('banner.badge2'),
+    title: t('banner.title2'),
+    desc: t('banner.desc2')
+  },
+  {
+    badge: t('banner.badge3'),
+    title: t('banner.title3'),
+    desc: t('banner.desc3')
+  },
+  {
+    badge: t('banner.badge4'),
+    title: t('banner.title4'),
+    desc: t('banner.desc4')
+  },
+  {
+    badge: t('banner.badge5'),
+    title: t('banner.title5'),
+    desc: t('banner.desc5')
+  },
+  {
+    badge: t('banner.badge1'),
+    title: t('banner.title1'),
+    desc: t('banner.desc1')
+  }
+])
+
+// 切换Banner
+const switchBanner = () => {
+  bannerSlide.value = (bannerSlide.value + 1) % bannerData.value.length
+}
+
+// 小数跳动效果 - 低频装饰性动画
+let flickerCounter = 0
+const flickerPrice = () => {
+  flickerCounter++
+  
+  // 涨跌幅跳动 - 每秒都跳动
+  const baseChange = parseFloat(goldData.value.change) || 0.35
+  const changeFluctuation = (Math.random() - 0.5) * 0.04 // ±0.02%波动
+  const newChange = (baseChange + changeFluctuation).toFixed(2)
+  
+  if (newChange !== displayChange.value.toString()) {
+    changeTicking.value = true
+    displayChange.value = parseFloat(newChange)
+    setTimeout(() => {
+      changeTicking.value = false
+    }, 300)
+  }
+  
+  // 价格跳动 - 每5秒才可能跳动一次，20%概率
+  if (flickerCounter % 5 !== 0 || Math.random() > 0.2) return
+  
+  const basePrice = goldData.value.price
+  if (!basePrice) return
+  
+  const parts = basePrice.split('.')
+  if (parts.length !== 2) {
+    goldDisplayPrice.value = basePrice
+    return
+  }
+  
+  const intPart = parts[0]
+  const decPart = parts[1]
+  
+  // 随机微调最后1-2位小数
+  let newDec = parseInt(decPart)
+  const fluctuation = Math.floor(Math.random() * 3) - 1 // -1 到 +1，更小的波动
+  newDec = Math.max(0, Math.min(99, newDec + fluctuation))
+  
+  const newPrice = `${intPart}.${String(newDec).padStart(2, '0')}`
+  
+  // 价格变化时触发动画
+  if (newPrice !== goldDisplayPrice.value) {
+    priceTicking.value = true
+    goldDisplayPrice.value = newPrice
+    setTimeout(() => {
+      priceTicking.value = false
+    }, 300)
+  }
+}
+
+let mainTimer = null      // 主定时器（每秒）
+let dataTimer = null      // 数据刷新定时器（10秒）
+let carouselTimer = null  // 轮播定时器（5秒）
+const timeoutIds = []
+// AGX正式发售日期 - 2026年2月28日
+const countdownTarget = new Date('2026-02-28T00:00:00').getTime()
+
+// 轮播切换行情类型
+const switchTickerType = () => {
+  currentTickerType.value = (currentTickerType.value + 1) % allTickerData.length
+}
+
+// 从后端获取黄金价格
+const fetchGoldPrice = async () => {
+  try {
+    const res = await api.gold.getPrices()
+    if (res.success && res.data) {
+      const gold = res.data.gold || res.data
+      if (gold && gold.price) {
+        const formattedPrice = parseFloat(gold.price).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+        const changeVal = parseFloat(gold.change24h || 0.35)
+        goldData.value = {
+          name: t('home.goldSpot'),
+          desc: t('home.goldDesc'),
+          price: formattedPrice,
+          change: changeVal.toFixed(2)
+        }
+        goldDisplayPrice.value = formattedPrice
+        displayChange.value = changeVal
+      }
+    }
+  } catch (e) {
+    // 使用默认数据
+    goldData.value.name = t('home.goldSpot')
+    goldData.value.desc = t('home.goldDesc')
+  }
+}
+
+// 从后端获取行情数据
+const getLocalIcon = (symbol) => {
+  const s = (symbol || '').replace('USDT', '').toLowerCase()
+  return `/crypto/${s}.png`
+}
+
+const fetchMarketData = async () => {
+  try {
+    const res = await api.market.getTickers({ type: 'crypto', tab: 'all' })
+    if (res.success && res.data && res.data.list) {
+      const list = res.data.list.slice(0, 5)
+      if (list.length > 0) {
+        // 映射后端字段：lastPrice -> price, priceChangePercent -> change
+        const validList = list.filter(item => {
+          const price = item.lastPrice || item.price
+          return price && parseFloat(price) > 0
+        })
+        if (validList.length > 0) {
+          marketCoins.value = validList.map(item => {
+            const sym = item.symbol?.replace('USDT', '') || item.name || item.symbol
+            const price = parseFloat(item.lastPrice || item.price)
+            const change = parseFloat(item.priceChangePercent || item.change24h || 0)
+            return {
+              symbol: sym,
+              price: price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+              change: change,
+              volume: item.quoteVolume ? (parseFloat(item.quoteVolume) / 1000000).toFixed(1) + 'M' : (item.volume ? (parseFloat(item.volume) / 1000).toFixed(1) + 'K' : '0'),
+              icon: getLocalIcon(sym)
+            }
+          })
+          // 更新热门币种
+          if (validList.length >= 3) {
+            hotCoins.value = validList.slice(0, 3).map(item => {
+              const sym = item.symbol?.replace('USDT', '') || item.name || item.symbol
+              const price = parseFloat(item.lastPrice || item.price)
+              const change = parseFloat(item.priceChangePercent || item.change24h || 0)
+              return {
+                symbol: sym,
+                price: '$' + price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+                change: change,
+                icon: getLocalIcon(sym)
+              }
+            })
+          }
+        }
+      }
+    }
+  } catch (e) {
+    // 使用默认数据
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const updateCountdown = () => {
+  const diff = countdownTarget - Date.now()
+  if (diff > 0) {
+    const d = Math.floor(diff / 86400000)
+    const h = Math.floor((diff % 86400000) / 3600000)
+    const m = Math.floor((diff % 3600000) / 60000)
+    const s = Math.floor((diff % 60000) / 1000)
+    const newVal = {
+      days: String(d).padStart(2, '0'),
+      hours: String(h).padStart(2, '0'),
+      mins: String(m).padStart(2, '0'),
+      secs: String(s).padStart(2, '0')
+    }
+    // 检测变化并触发翻牌
+    const keys = ['days', 'hours', 'mins', 'secs']
+    keys.forEach(key => {
+      if (newVal[key] !== countdown.value[key]) {
+        prevCountdown.value[key] = countdown.value[key]
+        flipState.value[key] = true
+        const timeoutId = setTimeout(() => { flipState.value[key] = false }, 600)
+        timeoutIds.push(timeoutId)
+      }
+    })
+    countdown.value = newVal
+  }
+}
+
+const handleImgError = (e) => {
+  e.target.style.background = 'linear-gradient(135deg, #C9A962, #8B7355)'
+  e.target.src = 'data:,'
+}
+
+// 生成迷你走势图路径
+const chartCache = {}
+const getChartLine = (change, symbol) => {
+  const key = `${symbol}-${change > 0 ? 'up' : 'down'}`
+  if (chartCache[key]) return chartCache[key]
+  
+  const points = []
+  const seed = symbol.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
+  const isUp = change >= 0
+  
+  for (let i = 0; i <= 12; i++) {
+    const x = (i / 12) * 60
+    const trend = isUp ? (12 - i) * 1.2 : i * 1.2
+    const noise = Math.sin(seed + i * 0.8) * 4 + Math.cos(seed * 0.5 + i * 1.2) * 3
+    const y = 12 + trend + noise
+    points.push(`${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${Math.max(2, Math.min(22, y)).toFixed(1)}`)
+  }
+  
+  chartCache[key] = points.join(' ')
+  return chartCache[key]
+}
+
+const getChartPath = (change, symbol) => {
+  const line = getChartLine(change, symbol)
+  return `${line} L60,24 L0,24 Z`
+}
+
+// 启动定时器
+const startTimers = () => {
+  if (mainTimer) return // 防止重复启动
+  
+  mainTimer = setInterval(() => {
+    updateCountdown()
+    flickerPrice()
+  }, 1000)
+
+  dataTimer = setInterval(() => {
+    fetchGoldPrice()
+    fetchMarketData()
+  }, 30000)
+
+  carouselTimer = setInterval(() => {
+    switchBanner()
+    switchTickerType()
+  }, 8000)
+}
+
+// 停止定时器
+const stopTimers = () => {
+  if (mainTimer) { clearInterval(mainTimer); mainTimer = null }
+  if (dataTimer) { clearInterval(dataTimer); dataTimer = null }
+  if (carouselTimer) { clearInterval(carouselTimer); carouselTimer = null }
+}
+
+onMounted(async () => {
+  await nextTick()
+  // 首次加载数据
+  setTimeout(async () => {
+    updateCountdown()
+    fetchGoldPrice()
+    fetchMarketData()
+  }, 100)
+  // 延迟启动定时器
+  setTimeout(startTimers, 500)
+})
+
+// keep-alive 激活时恢复定时器
+onActivated(() => {
+  startTimers()
+})
+
+// keep-alive 停用时暂停定时器
+onDeactivated(() => {
+  stopTimers()
+})
+
+onUnmounted(() => { 
+  stopTimers()
+  timeoutIds.forEach(id => clearTimeout(id))
+  timeoutIds.length = 0
+})
+</script>
+
+<style scoped>
+/* ========== Design System: Fintech/Crypto Dark Mode ========== */
+/* Primary: #C8AA6E (Gold) | Background: #0D1117 | Text: #F8FAFC */
+
+/* ========== 页面布局 ========== */
+.home-page {
+  width: 100%;
+  max-width: var(--page-max-width, 428px);
+  min-height: 100vh;
+  min-height: 100dvh; /* 动态视口高度，解决移动端浏览器地址栏问题 */
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  background: #0D1117;
+  overflow: hidden;
+}
+
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  padding-top: 46px;
+  padding-bottom: calc(var(--height-tabbar, 64px) + env(safe-area-inset-bottom, 0px) + 24px);
+  padding-left: 12px;
+  padding-right: 12px;
+  scrollbar-width: none;
+}
+
+.page-content::-webkit-scrollbar { display: none; }
+
+.home-page a:active { opacity: 0.92; }
+
+/* ========== 公告栏 ========== */
+.notice-bar {
+  position: fixed;
+  top: 4px;
+  left: 12px;
+  right: 12px;
+  max-width: calc(var(--page-max-width, 428px) - 24px);
+  margin: 0 auto;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: linear-gradient(145deg, #1E262F 0%, #181F28 100%);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: none;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 
+    0 6px 16px rgba(0, 0, 0, 0.35),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* 顶部银色装饰线 */
+.notice-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(192, 200, 210, 0.3) 20%, #C0C8D2 50%, rgba(192, 200, 210, 0.3) 80%, transparent 100%);
+}
+
+/* 底部金色装饰线 */
+.notice-bar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(200, 170, 110, 0.3) 30%, rgba(200, 170, 110, 0.5) 50%, rgba(200, 170, 110, 0.3) 70%, transparent 100%);
+}
+
+.notice-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #C8AA6E;
+}
+
+.notice-icon svg { width: 14px; height: 14px; }
+
+.notice-scroll { flex: 1; overflow: hidden; position: relative; }
+
+.notice-text {
+  display: inline-block;
+  font-size: 12px;
+  color: #94A3B8;
+  white-space: nowrap;
+  will-change: transform;
+  animation: scrollText 15s linear infinite;
+}
+
+@keyframes scrollText {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.notice-bar > svg { color: #475569; flex-shrink: 0; }
+
+/* ========== Banner卡片 (层级0 - 最突出) ========== */
+.banner-card {
+  position: relative;
+  margin: 8px 0;
+  padding: 16px;
+  min-height: 110px;
+  background: linear-gradient(145deg, #1E262F 0%, #181F28 100%);
+  border: none;
+  border-radius: 14px;
+  overflow: hidden;
+  display: block;
+  text-decoration: none;
+  box-sizing: border-box;
+  box-shadow: 
+    0 6px 16px rgba(0, 0, 0, 0.35),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* 顶部银色装饰线 */
+.banner-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(192, 200, 210, 0.3) 20%, #C0C8D2 50%, rgba(192, 200, 210, 0.3) 80%, transparent 100%);
+  z-index: 2;
+}
+
+/* 底部金色装饰线 */
+.banner-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(200, 170, 110, 0.3) 30%, rgba(200, 170, 110, 0.5) 50%, rgba(200, 170, 110, 0.3) 70%, transparent 100%);
+  z-index: 2;
+}
+
+/* 第一张卡片 */
+.banner-gold {
+  height: 130px;
+  padding-top: 10px;
+}
+
+.banner-gold .slide-bg {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle at center, rgba(212, 175, 55, 0.1) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.banner-gold .slide-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.slide-left { flex: 1; min-width: 0; }
+
+.slide-text { 
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.slide-badge {
+  display: inline-block;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #BFA14A 0%, #E8D5A3 40%, #BFA14A 60%, #9A854A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 6px;
+}
+
+.slide-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #F8FAFC;
+  line-height: 1.3;
+  margin: 0;
+  white-space: pre-line;
+}
+
+.slide-desc {
+  font-size: 10px;
+  color: #64748B;
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.slide-right { padding-left: 10px; }
+
+.price-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 2px;
+  padding: 6px 12px;
+  min-width: 145px;
+  min-height: 105px;
+  background: url('/gold-nugget.png') center bottom/100% auto no-repeat, rgba(12, 16, 23, 0.98);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.price-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 100%);
+  z-index: 0;
+}
+
+.price-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.price-value {
+  font-size: 18px;
+  font-weight: 700;
+  font-family: -apple-system, 'SF Mono', monospace;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.price-value.up {
+  color: #10B981;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8), 0 0 6px rgba(16, 185, 129, 0.3);
+}
+
+.price-value.down {
+  color: #EF4444;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8), 0 0 6px rgba(239, 68, 68, 0.3);
+}
+
+.price-value.price-tick {
+  animation: priceTick 0.3s ease-out;
+}
+
+@keyframes priceTick {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+.price-change {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: -apple-system, 'SF Mono', monospace;
+  transition: transform 0.2s ease;
+}
+
+.price-change.up { color: #10B981; }
+.price-change.down { color: #EF4444; }
+
+.price-change.change-pulse {
+  animation: changePulse 0.3s ease-out;
+}
+
+@keyframes changePulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* 卡片2: AGX发行 */
+.banner-launch {
+  background: linear-gradient(165deg, #1E262F 0%, #181F28 100%);
+  border-color: rgba(200, 170, 110, 0.15);
+}
+
+.banner-launch .launch-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.banner-launch .launch-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #D4AF37, #8B7355);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(212, 175, 55, 0.25);
+}
+
+.banner-launch .launch-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.banner-launch .launch-info { flex: 1; }
+
+.banner-launch .launch-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #F8FAFC;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.banner-launch .new-tag {
+  font-size: 9px;
+  padding: 2px 5px;
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: #fff;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.banner-launch .launch-subtitle {
+  font-size: 12px;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+.banner-launch .launch-subtitle span {
+  color: #D4AF37;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.banner-launch .launch-countdown {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.banner-launch .cd-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 48px;
+}
+
+.banner-launch .cd-num {
+  font-size: 24px;
+  font-weight: 700;
+  color: #E8D5A3;
+  font-family: -apple-system, 'SF Mono', monospace;
+  background: rgba(200, 170, 110, 0.12);
+  padding: 6px 10px;
+  border-radius: 6px;
+  min-width: 48px;
+  text-align: center;
+  border: 1px solid rgba(200, 170, 110, 0.2);
+}
+
+.banner-launch .cd-label {
+  font-size: 10px;
+  color: #475569;
+  margin-top: 3px;
+}
+
+.banner-launch .cd-sep {
+  font-size: 20px;
+  color: #C8AA6E;
+  font-weight: 300;
+  margin-bottom: 14px;
+}
+
+.banner-launch .launch-footer {
+  text-align: center;
+  font-size: 11px;
+  color: #94A3B8;
+  padding: 10px 14px;
+  margin: 6px -16px -16px;
+  background: rgba(200, 170, 110, 0.08);
+  border-top: 1px solid rgba(200, 170, 110, 0.15);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ========== 行情板块 (层级1) ========== */
+.market-block {
+  margin: 4px 0 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.market-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  background: transparent;
+  padding: 0;
+}
+
+.market-top .ticker-card {
+  flex: 1;
+  text-align: center;
+  align-items: center;
+  background: linear-gradient(145deg, #1E262F 0%, #181F28 100%);
+  border: none;
+  border-radius: 12px;
+  box-shadow: 
+    0 6px 16px rgba(0, 0, 0, 0.35),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.market-bottom {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: linear-gradient(145deg, #1E262F 0%, #181F28 100%);
+  border: none;
+  border-radius: 12px;
+  box-shadow: 
+    0 6px 16px rgba(0, 0, 0, 0.35),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+/* 顶部银色装饰线 */
+.market-bottom::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(192, 200, 210, 0.3) 20%, #C0C8D2 50%, rgba(192, 200, 210, 0.3) 80%, transparent 100%);
+  border-radius: 12px 12px 0 0;
+}
+
+/* 底部金色装饰线 */
+.market-bottom::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(200, 170, 110, 0.3) 30%, rgba(200, 170, 110, 0.5) 50%, rgba(200, 170, 110, 0.3) 70%, transparent 100%);
+}
+
+.market-bottom:active {
+  transform: scale(0.98) translateY(1px);
+  box-shadow: 
+    0 3px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+/* 行情轮播过渡 */
+.ticker-fade-enter-active,
+.ticker-fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.ticker-fade-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.ticker-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.ticker-card {
+  flex: 1;
+  min-width: 0;
+  height: auto;
+  padding: 12px 10px;
+  background: #12161D;
+  border: none;
+  border-radius: 0;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  transition: background 0.15s ease;
+}
+
+.ticker-card:active {
+  background: #181D26;
+}
+
+.ticker-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ticker-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.ticker-flag {
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  object-fit: cover;
+}
+
+.ticker-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: #E2E8F0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.ticker-price {
+  font-size: 14px;
+  font-weight: 600;
+  color: #F8FAFC;
+  font-family: -apple-system, 'SF Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.ticker-change {
+  font-size: 12px;
+  font-weight: 600;
+  font-family: -apple-system, 'SF Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.ticker-change.up { color: #10B981; }
+.ticker-change.down { color: #EF4444; }
+
+/* 黄金卡片样式 */
+.gold-left { display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; }
+
+.gold-icon { 
+  width: 36px; 
+  height: 36px; 
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.15));
+}
+
+.gold-info { display: flex; flex-direction: column; gap: 2px; }
+
+.gold-name { font-size: 13px; font-weight: 500; color: #F8FAFC; }
+
+.gold-sub { font-size: 10px; color: #64748B; }
+
+.gold-right { 
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  text-align: right; 
+  position: relative; 
+  z-index: 1; 
+}
+
+.gold-price {
+  font-size: 18px;
+  font-weight: 600;
+  font-family: -apple-system, 'Inter', sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.gold-price.up {
+  color: #10B981;
+  text-shadow: 0 0 6px rgba(16, 185, 129, 0.25);
+}
+
+.gold-price.down {
+  color: #EF4444;
+  text-shadow: 0 0 6px rgba(239, 68, 68, 0.25);
+}
+
+.gold-price.price-tick {
+  animation: priceTick 0.3s ease-out;
+}
+
+.gold-change {
+  font-size: 12px;
+  font-weight: 500;
+  font-family: -apple-system, 'Inter', sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.gold-change.up { color: #10B981; }
+.gold-change.down { color: #EF4444; }
+
+.gold-change.change-pulse {
+  animation: changePulse 0.3s ease-out;
+}
+
+/* ========== 快捷功能 (层级2) ========== */
+.quick-section { padding: 2px 0 10px; }
+
+.quick-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px 8px;
+  padding: 16px 12px;
+  background: linear-gradient(145deg, #1E262F 0%, #181F28 100%);
+  border: none;
+  border-radius: 14px;
+  box-shadow: 
+    0 6px 16px rgba(0, 0, 0, 0.35),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  z-index: 1;
+}
+
+/* 顶部银色装饰线 */
+.quick-grid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(192, 200, 210, 0.3) 20%, #C0C8D2 50%, rgba(192, 200, 210, 0.3) 80%, transparent 100%);
+  border-radius: 14px 14px 0 0;
+}
+
+/* 底部金色装饰线 */
+.quick-grid::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(200, 170, 110, 0.3) 30%, rgba(200, 170, 110, 0.5) 50%, rgba(200, 170, 110, 0.3) 70%, transparent 100%);
+}
+
+.quick-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: transform 0.15s ease;
+  pointer-events: auto;
+  z-index: 2;
+  position: relative;
+}
+
+.quick-item:active {
+  transform: scale(0.95);
+}
+
+.quick-icon {
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(200, 170, 110, 0.15) 0%, rgba(200, 170, 110, 0.05) 100%);
+  border: 1px solid rgba(200, 170, 110, 0.2);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.quick-icon::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 100%);
+  border-radius: 12px 12px 0 0;
+  pointer-events: none;
+}
+
+.quick-icon svg {
+  width: 22px;
+  height: 22px;
+  color: #C8AA6E;
+  stroke-width: 1.5;
+  position: relative;
+  z-index: 1;
+}
+
+.quick-item:active .quick-icon {
+  background: linear-gradient(145deg, rgba(200, 170, 110, 0.25) 0%, rgba(200, 170, 110, 0.1) 100%);
+  border-color: rgba(200, 170, 110, 0.35);
+  box-shadow: 
+    0 2px 6px rgba(0, 0, 0, 0.25),
+    inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.quick-item span {
+  font-size: 11px;
+  color: #E6EDF3;
+  font-weight: 500;
+}
+
+/* ========== 热门行情 (层级3) ========== */
+.market-section { padding: 2px 0 20px; }
+
+.market-list {
+  position: relative;
+  background: linear-gradient(145deg, #1E262F 0%, #181F28 100%);
+  border: none;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 
+    0 6px 16px rgba(0, 0, 0, 0.35),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* 顶部银色装饰线 */
+.market-list::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(192, 200, 210, 0.3) 20%, #C0C8D2 50%, rgba(192, 200, 210, 0.3) 80%, transparent 100%);
+  z-index: 1;
+}
+
+/* 底部金色装饰线 */
+.market-list::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(200, 170, 110, 0.3) 30%, rgba(200, 170, 110, 0.5) 50%, rgba(200, 170, 110, 0.3) 70%, transparent 100%);
+  z-index: 1;
+}
+
+.market-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  text-decoration: none;
+  transition: background 0.15s ease;
+  position: relative;
+}
+
+.market-item:active { 
+  background: rgba(212, 175, 55, 0.06);
+}
+
+.market-item + .market-item { border-top: 1px solid rgba(255, 255, 255, 0.03); }
+
+.market-rank {
+  width: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  text-align: center;
+  font-family: -apple-system, 'SF Mono', monospace;
+}
+
+.market-rank.top { 
+  color: #D4AF37; 
+}
+
+.market-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #1a1e26;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.market-info { flex: 1; min-width: 0; }
+
+.market-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #F8FAFC;
+}
+
+.market-name small {
+  font-size: 11px;
+  color: #475569;
+  font-weight: 400;
+  margin-left: 2px;
+}
+
+.market-vol {
+  display: block;
+  font-size: 10px;
+  color: #475569;
+  margin-top: 2px;
+}
+
+.market-price { text-align: right; }
+
+.price-val {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #F8FAFC;
+  font-family: -apple-system, 'SF Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.price-change {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: -apple-system, 'SF Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+
+.price-change.up { color: #10B981; }
+.price-change.down { color: #EF4444; }
+
+/* 倒计时数字块 */
+.cd-num {
+  width: 50px;
+  height: 54px;
+  background: linear-gradient(180deg, #161A1F 0%, #0D1014 100%);
+  border: 1px solid rgba(212, 175, 55, 0.12);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 600;
+  font-family: -apple-system, 'Inter', sans-serif;
+  font-variant-numeric: tabular-nums;
+  color: #D4AF37;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.cd-num::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.cd-num::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 50%;
+  height: 1px;
+  background: rgba(0,0,0,0.4);
+  transform: translateY(-50%);
+}
+
+.cd-num.tick {
+  animation: numTick 0.2s ease-out;
+}
+
+@keyframes numTick {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+
+/* ========== 骨架屏 ========== */
+.skeleton { pointer-events: none; }
+
+.skeleton-box {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+.skeleton-text {
+  display: block;
+  height: 12px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 3px;
+  margin: 3px 0;
+}
+
+.skeleton-text.w60 { width: 60%; }
+.skeleton-text.w50 { width: 50%; }
+.skeleton-text.w40 { width: 40%; }
+.skeleton-text.w30 { width: 30%; }
+
+.market-item.skeleton .market-rank {
+  width: 20px;
+  height: 20px;
+}
+
+.market-item.skeleton .market-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ==================== Light 主题 - Pro Max 优化 ==================== */
+:root[data-theme="light"] .home-page {
+  background: #F0F2F5;
+}
+
+:root[data-theme="light"] .notice-bar {
+  background: #FFFFFF;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+:root[data-theme="light"] .notice-text {
+  color: #374151;
+}
+
+:root[data-theme="light"] .banner-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+:root[data-theme="light"] .slide-title {
+  color: #111827;
+}
+
+:root[data-theme="light"] .slide-desc {
+  color: #6B7280;
+}
+
+:root[data-theme="light"] .price-card {
+  background: url('/gold-nugget.png') center bottom/100% auto no-repeat, #FFFFFF;
+  border: 1px solid rgba(200, 170, 110, 0.3);
+  box-shadow: 0 2px 8px rgba(200, 170, 110, 0.15);
+}
+
+:root[data-theme="light"] .banner-launch {
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+:root[data-theme="light"] .banner-launch .launch-title {
+  color: #111827;
+}
+
+:root[data-theme="light"] .banner-launch .cd-num {
+  background: linear-gradient(180deg, #F5F5F5 0%, #E8E8E8 100%);
+  color: #92400E;
+  border: 1px solid rgba(200, 170, 110, 0.25);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+:root[data-theme="light"] .banner-launch .launch-footer {
+  background: #F8F9FA;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+:root[data-theme="light"] .market-top .ticker-card,
+:root[data-theme="light"] .market-bottom {
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+:root[data-theme="light"] .ticker-name,
+:root[data-theme="light"] .ticker-price,
+:root[data-theme="light"] .market-name,
+:root[data-theme="light"] .price-val {
+  color: #111827;
+}
+
+:root[data-theme="light"] .gold-name {
+  color: #111827;
+}
+
+:root[data-theme="light"] .gold-sub {
+  color: #6B7280;
+}
+
+:root[data-theme="light"] .quick-grid {
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+:root[data-theme="light"] .quick-icon {
+  background: linear-gradient(145deg, #F5F0E6 0%, #EBE4D6 100%);
+  border: 1px solid rgba(200, 170, 110, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+:root[data-theme="light"] .quick-icon svg {
+  color: #92400E;
+}
+
+:root[data-theme="light"] .quick-item span {
+  color: #374151;
+}
+
+:root[data-theme="light"] .market-list {
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+:root[data-theme="light"] .market-item + .market-item {
+  border-top: 1px solid #E5E7EB;
+}
+
+:root[data-theme="light"] .market-icon {
+  background: #F3F4F6;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+:root[data-theme="light"] .market-name small,
+:root[data-theme="light"] .market-vol,
+:root[data-theme="light"] .market-rank {
+  color: #6B7280;
+}
+
+:root[data-theme="light"] .market-rank.top {
+  color: #92400E;
+}
+
+:root[data-theme="light"] .skeleton-box,
+:root[data-theme="light"] .skeleton-text {
+  background: linear-gradient(90deg, #E5E7EB 25%, #D1D5DB 50%, #E5E7EB 75%);
+  background-size: 200% 100%;
+}
+
+:root[data-theme="light"] .cd-num {
+  background: linear-gradient(180deg, #F5F5F5 0%, #E8E8E8 100%);
+  border: 1px solid rgba(200, 170, 110, 0.2);
+}
+
+:root[data-theme="light"] .cd-num::after {
+  background: rgba(0, 0, 0, 0.06);
+}
+</style>

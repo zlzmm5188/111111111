@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # 前端服务
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agx-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # 挂载 SSL 证书（从 Cloudflare 获取 Origin Certificate）
+      - ./ssl/agx.bi.pem:/etc/nginx/ssl/agx.bi.pem:ro
+      - ./ssl/agx.bi.key:/etc/nginx/ssl/agx.bi.key:ro
+    networks:
+      - agx-network
+    environment:
+      - TZ=Asia/Shanghai
+
+  # 后端服务（如果需要一起部署）
+  # backend:
+  #   build:
+  #     context: ../agx-backend
+  #     dockerfile: Dockerfile
+  #   container_name: agx-backend
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3001:3001"
+  #   env_file:
+  #     - ../agx-backend/.env
+  #   networks:
+  #     - agx-network
+  #   depends_on:
+  #     - db
+
+networks:
+  agx-network:
+    driver: bridge

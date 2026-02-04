@@ -1,0 +1,248 @@
+/* AGX后台管理界面 - 统一间距与样式 */
+
+/* ==================== 全局变量 ==================== */
+:root {
+  --agx-page-padding: 16px;
+  --agx-card-radius: 8px;
+  --agx-gap-sm: 8px;
+  --agx-gap-md: 12px;
+  --agx-gap-lg: 16px;
+  --agx-gap-xl: 24px;
+  
+  --agx-font-xs: 12px;
+  --agx-font-sm: 13px;
+  --agx-font-base: 14px;
+  --agx-font-lg: 16px;
+  --agx-font-xl: 18px;
+  
+  --agx-text-primary: #333333;
+  --agx-text-secondary: #666666;
+  --agx-text-muted: #999999;
+  
+  --agx-border-color: #e8e8e8;
+  --agx-bg-light: #fafafa;
+}
+
+/* ==================== 页面容器 ==================== */
+.agx-admin-container {
+  padding: var(--agx-page-padding);
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+.agx-page-section {
+  margin-bottom: var(--agx-gap-lg);
+}
+
+/* ==================== 统一的行和列 ==================== */
+.agx-row {
+  margin-bottom: var(--agx-gap-lg);
+}
+
+.agx-row:last-child {
+  margin-bottom: 0;
+}
+
+.agx-col {
+  padding: 0 calc(var(--agx-gap-md) / 2);
+}
+
+/* ==================== 统一卡片样式 ==================== */
+.agx-card {
+  background: #fff;
+  border-radius: var(--agx-card-radius);
+  border: 1px solid var(--agx-border-color);
+  padding: var(--agx-gap-lg);
+  transition: all 0.3s ease;
+}
+
+.agx-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.agx-card-title {
+  font-size: var(--agx-font-base);
+  font-weight: 600;
+  color: var(--agx-text-primary);
+  margin: 0 0 var(--agx-gap-md) 0;
+  padding-bottom: var(--agx-gap-md);
+  border-bottom: 1px solid var(--agx-border-color);
+  line-height: 1.5;
+}
+
+/* ==================== 统计卡片 ==================== */
+.agx-stat-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: var(--agx-card-radius);
+  padding: var(--agx-gap-lg);
+  color: #fff;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.agx-stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.agx-stat-card.blue { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.agx-stat-card.green { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+.agx-stat-card.orange { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.agx-stat-card.purple { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.agx-stat-card.red { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); }
+.agx-stat-card.gold { background: linear-gradient(135deg, #f5af19 0%, #f12711 100%); }
+
+.agx-stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  margin: var(--agx-gap-sm) 0;
+  line-height: 1.2;
+}
+
+.agx-stat-label {
+  font-size: var(--agx-font-sm);
+  opacity: 0.95;
+  line-height: 1.5;
+}
+
+.agx-stat-footer {
+  font-size: var(--agx-font-xs);
+  margin-top: var(--agx-gap-md);
+  padding-top: var(--agx-gap-md);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  opacity: 0.85;
+  line-height: 1.4;
+}
+
+/* ==================== 按钮统一样式 ==================== */
+.agx-btn {
+  height: 36px;
+  padding: 0 var(--agx-gap-md);
+  font-size: var(--agx-font-sm);
+  border-radius: 6px;
+  border: 1px solid var(--agx-border-color);
+  transition: all 0.2s ease;
+}
+
+.agx-btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border: none;
+}
+
+.agx-btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* ==================== 输入框统一样式 ==================== */
+.agx-input {
+  height: 36px;
+  font-size: var(--agx-font-sm);
+  border-radius: 6px;
+  border: 1px solid var(--agx-border-color);
+  padding: 0 var(--agx-gap-md);
+}
+
+.agx-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+/* ==================== 表格统一样式 ==================== */
+.agx-table {
+  font-size: var(--agx-font-sm);
+}
+
+.agx-table .arco-table-th {
+  font-size: var(--agx-font-xs);
+  font-weight: 600;
+  color: var(--agx-text-secondary);
+  background: var(--agx-bg-light);
+  line-height: 1.5;
+}
+
+.agx-table .arco-table-td {
+  color: var(--agx-text-primary);
+  line-height: 1.6;
+}
+
+/* ==================== 间距工具类 ==================== */
+.agx-m-0 { margin: 0; }
+.agx-m-sm { margin: var(--agx-gap-sm); }
+.agx-m-md { margin: var(--agx-gap-md); }
+.agx-m-lg { margin: var(--agx-gap-lg); }
+.agx-m-xl { margin: var(--agx-gap-xl); }
+
+.agx-mt-sm { margin-top: var(--agx-gap-sm); }
+.agx-mt-md { margin-top: var(--agx-gap-md); }
+.agx-mt-lg { margin-top: var(--agx-gap-lg); }
+.agx-mt-xl { margin-top: var(--agx-gap-xl); }
+
+.agx-mb-sm { margin-bottom: var(--agx-gap-sm); }
+.agx-mb-md { margin-bottom: var(--agx-gap-md); }
+.agx-mb-lg { margin-bottom: var(--agx-gap-lg); }
+.agx-mb-xl { margin-bottom: var(--agx-gap-xl); }
+
+.agx-p-0 { padding: 0; }
+.agx-p-sm { padding: var(--agx-gap-sm); }
+.agx-p-md { padding: var(--agx-gap-md); }
+.agx-p-lg { padding: var(--agx-gap-lg); }
+.agx-p-xl { padding: var(--agx-gap-xl); }
+
+/* ==================== 字体工具类 ==================== */
+.agx-text-xs { font-size: var(--agx-font-xs); }
+.agx-text-sm { font-size: var(--agx-font-sm); }
+.agx-text-base { font-size: var(--agx-font-base); }
+.agx-text-lg { font-size: var(--agx-font-lg); }
+.agx-text-xl { font-size: var(--agx-font-xl); }
+
+.agx-text-primary { color: var(--agx-text-primary); }
+.agx-text-secondary { color: var(--agx-text-secondary); }
+.agx-text-muted { color: var(--agx-text-muted); }
+.agx-text-success { color: #52c41a; }
+.agx-text-warning { color: #faad14; }
+.agx-text-danger { color: #ff4d4f; }
+
+/* ==================== Flex布局工具类 ==================== */
+.agx-flex { display: flex; }
+.agx-flex-center { display: flex; align-items: center; justify-content: center; }
+.agx-flex-between { display: flex; align-items: center; justify-content: space-between; }
+.agx-flex-wrap { flex-wrap: wrap; }
+
+.agx-gap-0 { gap: 0; }
+.agx-gap-sm { gap: var(--agx-gap-sm); }
+.agx-gap-md { gap: var(--agx-gap-md); }
+.agx-gap-lg { gap: var(--agx-gap-lg); }
+.agx-gap-xl { gap: var(--agx-gap-xl); }
+
+/* ==================== 响应式设计 ==================== */
+@media (max-width: 1200px) {
+  :root {
+    --agx-page-padding: 12px;
+    --agx-gap-lg: 12px;
+  }
+  
+  .agx-stat-value {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --agx-page-padding: 8px;
+    --agx-gap-md: 8px;
+    --agx-gap-lg: 8px;
+  }
+  
+  .agx-card {
+    padding: var(--agx-gap-md);
+  }
+  
+  .agx-stat-card {
+    padding: var(--agx-gap-md);
+  }
+  
+  .agx-stat-value {
+    font-size: 18px;
+  }
+}

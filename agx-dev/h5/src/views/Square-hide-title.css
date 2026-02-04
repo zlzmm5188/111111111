@@ -1,0 +1,15 @@
+/* 广场标题栏隐藏样式 */
+
+/* 隐藏标题栏 */
+.hide-header .logo-area,
+.hide-header .header-actions,
+.hide-header .site-name {
+  display: none !important;
+}
+
+/* 显示标题栏 */
+.show-header .logo-area,
+.show-header .header-actions,
+.show-header .site-name {
+  display: flex;
+}

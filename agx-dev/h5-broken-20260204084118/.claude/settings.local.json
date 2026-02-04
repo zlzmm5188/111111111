@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//root/agx-dev/**)",
+      "Bash(npm install:*)",
+      "Bash(ls:*)",
+      "Bash(npm run build:*)",
+      "Bash(grep:*)"
+    ],
+    "additionalDirectories": [
+      "/root/agx-dev/agx-backend/src/common/pipes",
+      "/root/agx-dev/agx-backend/src/common/guards",
+      "/root/agx-dev/agx-backend/src",
+      "/root/agx-dev/agx-backend"
+    ]
+  }
+}

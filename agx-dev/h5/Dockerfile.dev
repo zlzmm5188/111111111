@@ -1,0 +1,19 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# 安装构建原生模块所需的工具
+RUN apk add --no-cache python3 make g++ autoconf automake libtool nasm zlib-dev libpng-dev
+
+# 安装依赖
+COPY package*.json ./
+RUN npm install --legacy-peer-deps
+
+# 复制源码
+COPY . .
+
+# 暴露开发服务器端口
+EXPOSE 5173
+
+# 启动开发服务器
+CMD ["npx", "vite", "--host", "0.0.0.0"]

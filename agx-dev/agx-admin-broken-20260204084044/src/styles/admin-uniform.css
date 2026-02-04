@@ -1,0 +1,8 @@
+/* AGX后台统一样式 */
+.agx-admin-page { padding: 16px; }
+.agx-row { margin-bottom: 16px; }
+.agx-card { border-radius: 8px; border: 1px solid #e8e8e8; }
+.agx-stat-card { padding: 16px; text-align: center; border-radius: 8px; color: #fff; }
+.agx-stat-value { font-size: 24px; font-weight: 700; margin: 8px 0; }
+.agx-stat-label { font-size: 13px; }
+.agx-stat-footer { font-size: 12px; margin-top: 8px; }

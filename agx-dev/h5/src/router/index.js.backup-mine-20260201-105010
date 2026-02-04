@@ -1,0 +1,118 @@
+/**
+ * AGX - Router Configuration with Authentication Guard
+ */
+
+import { createRouter, createWebHistory } from 'vue-router'
+import { tokenStorage } from '../utils/security'
+
+// 公开页面（无需登录）
+const publicPages = ['/login', '/register', '/home', '/markets', '/agx', '/square', '/help', '/about', '/team', '/showcase', '/kline', '/coin/:symbol', '/ecosystem', '/audit', '/whitepaper', '/company-whitepaper', '/agreement', '/privacy', '/disclaimer', '/i', '/i/:code']
+
+// 需要认证的页面
+const authRequiredPages = [
+  '/assets', '/deposit', '/withdraw', '/orders', '/tasks',
+  '/trade', '/contract', '/otc', '/gold',
+  '/copy-trade', '/ieo', '/airdrop', '/invite', '/ranking', '/invite-rank',
+  '/settings', '/kyc', '/notifications',
+  '/post/:id', '/create-post', '/topic/:id', '/chat', '/chat/:id', '/user/:id',
+  '/ai', '/buy-agx'
+]
+
+// 检查路由是否需要认证
+function requiresAuth(path) {
+  return authRequiredPages.some(route => {
+    const pattern = route.replace(/:[^/]+/g, '[^/]+')
+    return new RegExp().test(path)
+  })
+}
+
+// Create router
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    // 启动页
+    {
+      path: '/splash',
+      name: 'Splash',
+      component: () => import('@/views/Splash.vue'),
+      meta: { title: 'AGX' }
+    },
+    // 主页
+    {
+      path: '/',
+      redirect: '/splash'
+    },
+    {
+      path: '/home',
+      name: 'Home',
+      component: () => import('@/views/Home.vue'),
+      meta: { title: 'AGX', showTabBar: true }
+    },
+    // 广场
+    {
+      path: '/square',
+      name: 'Square',
+      component: () => import('@/views/Square.vue'),
+      meta: { title: '广场', showTabBar: true }
+    },
+    // 团队页面 - 新增
+    {
+      path: '/team',
+      name: 'Team',
+      component: () => import('@/views/Team.vue'),
+      meta: { title: '团队介绍' }
+    },
+    // 行情
+    {
+      path: '/markets',
+      name: 'Markets',
+      component: () => import('@/views/Markets/index.vue'),
+      meta: { title: '行情', showTabBar: true }
+    },
+    // AGX页面
+    {
+      path: '/agx',
+      name: 'AGX',
+      component: () => import('@/views/AGX.vue'),
+      meta: { title: 'AGX', showTabBar: true }
+    },
+    // 需要认证的页面...
+    {
+      path: '/create-post',
+      name: 'CreatePost',
+      component: () => import('@/views/CreatePost.vue'),
+      meta: { title: '发布动态', requiresAuth: true }
+    },
+    {
+      path: '/post/:id',
+      name: 'PostDetail',
+      component: () => import('@/views/PostDetail.vue'),
+      meta: { title: '帖子详情', requiresAuth: true }
+    }
+  ]
+})
+
+// Global navigation guard for page titles (暂时禁用认证检查)
+router.beforeEach((to, from, next) => {
+  // 设置页面标题
+  if (to.meta.title) {
+    document.title = to.meta.title
+  }
+  
+  // 检查是否需要认证
+  if (to.meta.requiresAuth && requiresAuth(to.path)) {
+    const token = tokenStorage.get()
+    
+    if (!token) {
+      // 未登录，跳转到登录页，并传递回跳地址
+      next('/login', { redirect: to.fullPath })
+      return
+    }
+    
+    // 有token但可能过期，这里不验证，让后端处理
+  }
+  
+  next()
+})
+
+export default router

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Memorandum & Articles of Association</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a1f2a 0%, #0d1117 100%);
+      font-family: 'Times New Roman', serif;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      padding-top: 70px;
+    }
+    .certificate {
+      width: 100%;
+      max-width: 400px;
+      background: linear-gradient(180deg, #fefefe 0%, #f5f5f0 100%);
+      border: 3px solid #1a365d;
+      border-radius: 12px;
+      padding: 30px 20px;
+      position: relative;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    .certificate::before {
+      content: '';
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      border: 1px solid #c9a227;
+      border-radius: 8px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 18px;
+      position: relative;
+      z-index: 1;
+    }
+    .crest {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 12px;
+      background: linear-gradient(135deg, #1a365d, #2d4a7c);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #c9a227;
+      font-size: 10px;
+      font-weight: bold;
+      text-align: center;
+      border: 2px solid #c9a227;
+    }
+    .gov-name {
+      font-size: 14px;
+      color: #1a365d;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+    .gov-sub {
+      font-size: 10px;
+      color: #666;
+      margin-top: 4px;
+    }
+    .title {
+      text-align: center;
+      font-size: 13px;
+      color: #1a365d;
+      margin: 18px 0;
+      font-weight: bold;
+      letter-spacing: 1px;
+      border-bottom: 2px solid #c9a227;
+      border-top: 2px solid #c9a227;
+      padding: 12px 0;
+      position: relative;
+      z-index: 1;
+    }
+    .content {
+      text-align: center;
+      padding: 0 10px;
+      position: relative;
+      z-index: 1;
+    }
+    .entity {
+      font-size: 14px;
+      color: #333;
+      font-weight: bold;
+      margin: 15px 0;
+    }
+    .text {
+      font-size: 11px;
+      color: #555;
+      line-height: 1.5;
+      margin: 10px 0;
+    }
+    .articles {
+      text-align: left;
+      margin: 15px 0;
+      font-size: 10px;
+      color: #555;
+      line-height: 1.5;
+    }
+    .article-item {
+      margin: 8px 0;
+      padding-left: 15px;
+      text-indent: -15px;
+    }
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      position: relative;
+      z-index: 1;
+    }
+    .seal {
+      width: 50px;
+      height: 50px;
+      border: 2px solid #c9a227;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #c9a227;
+      font-size: 8px;
+      font-weight: bold;
+      text-align: center;
+    }
+    .stamp {
+      text-align: right;
+      font-size: 10px;
+      color: #1a365d;
+      font-weight: bold;
+    }
+    .stamp-date {
+      font-size: 9px;
+      color: #666;
+      font-weight: normal;
+    }
+      .close-btn {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .close-btn svg { width: 20px; height: 20px; stroke: #fff; }
+    .close-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.2); }
+
+    /* 防截屏水印遮罩 */
+    .watermark-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 9999;
+      background-image: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 100px,
+        rgba(255,255,255,0.015) 100px,
+        rgba(255,255,255,0.015) 200px
+      );
+    }
+    .watermark-overlay::before {
+      content: 'AGX CONFIDENTIAL';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-30deg);
+      font-size: 60px;
+      font-weight: bold;
+      color: rgba(255,255,255,0.03);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .screenshot-mask {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #000;
+      z-index: 99999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 18px;
+    }
+    .screenshot-mask.active { display: flex; }
+
+  </style>
+</head>
+<body>
+  <div class="close-btn" onclick="if(window.parent !== window) { window.parent.postMessage('closeLicense', '*'); } else if(window.opener) { window.close(); } else { window.history.back(); }">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 6L6 18M6 6l12 12"/>
+    </svg>
+  </div>
+  <div class="certificate">
+    <div class="header">
+      <div class="crest">CAYMAN<br>ISLANDS</div>
+      <div class="gov-name">CAYMAN ISLANDS</div>
+      <div class="gov-sub">Companies Act (As Revised)</div>
+    </div>
+    <div class="title">MEMORANDUM AND ARTICLES OF ASSOCIATION</div>
+    <div class="content">
+      <p class="text">EXEMPTED COMPANY LIMITED BY SHARES</p>
+      <div class="entity">Shengda Digital Capital Group Limited</div>
+      <div class="articles">
+        <div class="article-item">1. The name of the Company is Shengda Digital Capital Group Limited</div>
+        <div class="article-item">2. The registered office shall be situated in the Cayman Islands</div>
+        <div class="article-item">3. The objects for which the Company is established are unrestricted</div>
+        <div class="article-item">4. The liability of each member is limited to the amount unpaid on such member's shares</div>
+        <div class="article-item">5. The authorised share capital is USD 50,000 divided into 50,000 shares of USD 1.00 each</div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="seal">COMPANY<br>SEAL</div>
+      <div class="stamp">
+        STAMPED & FILED<br>
+        <span class="stamp-date">December 15, 2023</span>
+      </div>
+    </div>
+  </div>
+  <script>
+    // 防截屏保护
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if (e.key === 'PrintScreen' || (e.ctrlKey && (e.key === 'p' || e.key === 'P' || e.key === 's' || e.key === 'S'))) {
+        e.preventDefault();
+        document.getElementById('screenshotMask').classList.add('active');
+        setTimeout(() => document.getElementById('screenshotMask').classList.remove('active'), 2000);
+      }
+    });
+    document.addEventListener('copy', e => e.preventDefault());
+    document.addEventListener('cut', e => e.preventDefault());
+    
+    // 检测失焦（可能在截屏）
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        document.getElementById('screenshotMask').classList.add('active');
+      } else {
+        setTimeout(() => document.getElementById('screenshotMask').classList.remove('active'), 500);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,725 @@
+/**
+ * AGX 后台管理系统 - 专属主题样式
+ * 设计原则：简洁、专业、易用、响应式
+ */
+
+// ==================== 主题变量 ====================
+:root {
+  // 品牌色 - 金色系（与H5前台统一）
+  --agx-primary: #C8AA6E;
+  --agx-primary-light: #E8D5A3;
+  --agx-primary-dark: #A08A5B;
+  --agx-primary-bg: rgba(200, 170, 110, 0.08);
+  
+  // 功能色
+  --agx-success: #52C41A;
+  --agx-warning: #FAAD14;
+  --agx-danger: #F5222D;
+  --agx-info: #1890FF;
+  
+  // 中性色
+  --agx-text-primary: #1D2129;
+  --agx-text-secondary: #4E5969;
+  --agx-text-tertiary: #86909C;
+  --agx-text-disabled: #C9CDD4;
+  
+  // 背景色
+  --agx-bg-primary: #FFFFFF;
+  --agx-bg-secondary: #F7F8FA;
+  --agx-bg-tertiary: #F2F3F5;
+  
+  // 边框色
+  --agx-border: #E5E6EB;
+  --agx-border-light: #F2F3F5;
+  
+  // 阴影
+  --agx-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --agx-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --agx-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
+  
+  // 间距系统 (8px 基准)
+  --agx-spacing-xs: 4px;
+  --agx-spacing-sm: 8px;
+  --agx-spacing-md: 16px;
+  --agx-spacing-lg: 24px;
+  --agx-spacing-xl: 32px;
+  --agx-spacing-2xl: 48px;
+  
+  // 圆角
+  --agx-radius-sm: 4px;
+  --agx-radius-md: 8px;
+  --agx-radius-lg: 12px;
+  
+  // 字体大小系统
+  --agx-font-xs: 12px;
+  --agx-font-sm: 13px;
+  --agx-font-base: 14px;
+  --agx-font-md: 15px;
+  --agx-font-lg: 16px;
+  --agx-font-xl: 18px;
+  --agx-font-2xl: 20px;
+  --agx-font-3xl: 24px;
+  --agx-font-4xl: 28px;
+}
+
+// 暗色主题
+body[arco-theme='dark'] {
+  --agx-text-primary: #F6F6F6;
+  --agx-text-secondary: #C9CDD4;
+  --agx-text-tertiary: #86909C;
+  --agx-bg-primary: #17171A;
+  --agx-bg-secondary: #232324;
+  --agx-bg-tertiary: #2A2A2B;
+  --agx-border: #3D3D3F;
+  --agx-border-light: #2A2A2B;
+}
+
+// ==================== 全局基础样式 ====================
+html {
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  // 优化的中英文字体栈
+  font-family: 
+    // 系统默认 UI 字体
+    -apple-system, BlinkMacSystemFont,
+    // Windows 中文字体
+    'Microsoft YaHei', 'PingFang SC', 
+    // 通用无衬线字体
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    // 中文备用
+    'Noto Sans SC', 'Source Han Sans SC',
+    // 最终回退
+    sans-serif;
+  font-size: var(--agx-font-base);
+  line-height: 1.6;
+  color: var(--agx-text-primary);
+  background-color: var(--agx-bg-secondary);
+  letter-spacing: 0.01em;
+}
+
+// 数字等宽字体（用于金额、数据）
+.agx-mono, .stat-value, .arco-statistic-value {
+  font-family: 'SF Mono', 'Roboto Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+// ==================== 排版优化 ====================
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--agx-text-primary);
+}
+
+// ==================== 布局优化 ====================
+// 侧边栏
+.agx-sider {
+  background: var(--agx-bg-primary) !important;
+  border-right: 1px solid var(--agx-border-light);
+  
+  .arco-menu {
+    background: transparent;
+    font-size: var(--agx-font-base);
+  }
+  
+  .arco-menu-item,
+  .arco-menu-inline-header {
+    margin: 4px 8px;
+    border-radius: var(--agx-radius-sm);
+    color: var(--agx-text-secondary);
+    height: 40px;
+    line-height: 40px;
+    
+    &:hover {
+      background: var(--agx-bg-tertiary);
+      color: var(--agx-text-primary);
+    }
+  }
+  
+  .arco-menu-item.arco-menu-selected {
+    background: var(--agx-primary-bg);
+    color: var(--agx-primary);
+    font-weight: 500;
+  }
+}
+
+// 顶部导航
+.agx-header {
+  background: var(--agx-bg-primary);
+  border-bottom: 1px solid var(--agx-border-light);
+  height: 56px;
+  padding: 0 var(--agx-spacing-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  
+  .agx-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--agx-spacing-sm);
+    font-size: var(--agx-font-xl);
+    font-weight: 600;
+    color: var(--agx-primary);
+  }
+}
+
+// 内容区域
+.agx-content {
+  padding: var(--agx-spacing-lg);
+  min-height: calc(100vh - 112px);
+}
+
+// ==================== 卡片组件 ====================
+.agx-card, .ma-content-block {
+  background: var(--agx-bg-primary);
+  border-radius: var(--agx-radius-md);
+  box-shadow: var(--agx-shadow-sm);
+  padding: var(--agx-spacing-lg);
+  margin-bottom: var(--agx-spacing-md);
+  
+  .agx-card-title, .content-block-title {
+    font-size: var(--agx-font-lg);
+    font-weight: 600;
+    color: var(--agx-text-primary);
+    margin-bottom: var(--agx-spacing-md);
+    padding-bottom: var(--agx-spacing-md);
+    border-bottom: 1px solid var(--agx-border-light);
+  }
+}
+
+// ==================== 表格优化 ====================
+/**
+ * AGX 后台表格设计规范
+ * 基于 Ant Design Pro 标准
+ * 
+ * 列宽标准:
+ * - 序号/ID列: 70-80px
+ * - 状态标签: 90-100px
+ * - 金额数字: 130px (右对齐)
+ * - 时间日期: 170px
+ * - 用户名/名称: 120-150px
+ * - 操作按钮: 150px (居中)
+ * - 证件类型等短文本: 100px
+ * - 描述/地址: 自适应
+ */
+.agx-table {
+  background: var(--agx-bg-primary);
+  border-radius: var(--agx-radius-md);
+  overflow: hidden;
+  
+  .arco-table-container {
+    overflow-x: auto;
+  }
+  
+  .arco-table {
+    table-layout: fixed;
+    min-width: 100%;
+  }
+  
+  .arco-table-th {
+    background: var(--agx-bg-tertiary) !important;
+    font-weight: 600;
+    color: var(--agx-text-secondary);
+    font-size: 13px;
+    padding: 12px 16px;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--agx-border-light);
+  }
+  
+  .arco-table-td {
+    padding: 14px 16px;
+    color: var(--agx-text-primary);
+    font-size: 14px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--agx-border-light);
+    white-space: nowrap;
+  }
+  
+  .arco-table-tr:hover .arco-table-td {
+    background: var(--agx-bg-secondary);
+  }
+  
+  // 数字等宽字体
+  .amount, .number, .money {
+    font-family: 'SF Mono', 'Roboto Mono', 'Menlo', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// 通用表格样式 (应用于所有 arco-table)
+.arco-table {
+  .arco-table-th,
+  .arco-table-td {
+    padding: 12px 16px;
+    white-space: nowrap;
+  }
+  
+  // 表格单元格内容不换行
+  .arco-table-cell {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  // 标签不换行
+  .arco-tag {
+    white-space: nowrap;
+  }
+}
+
+// ==================== 搜索栏优化 ====================
+.agx-search-bar, .ma-crud .arco-card-body {
+  background: var(--agx-bg-primary);
+  border-radius: var(--agx-radius-md);
+  padding: var(--agx-spacing-md) var(--agx-spacing-lg);
+  margin-bottom: var(--agx-spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--agx-spacing-md);
+  flex-wrap: wrap;
+  
+  .arco-input-wrapper,
+  .arco-select-view {
+    background: var(--agx-bg-secondary);
+    border-color: transparent;
+    min-height: 36px;
+    font-size: var(--agx-font-base);
+    
+    &:hover,
+    &:focus-within {
+      border-color: var(--agx-primary);
+    }
+  }
+  
+  .arco-form-item {
+    margin-bottom: 0;
+  }
+}
+
+// ==================== 按钮优化 ====================
+.arco-btn {
+  font-size: var(--agx-font-base);
+  height: 36px;
+  padding: 0 16px;
+  border-radius: var(--agx-radius-sm);
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.arco-btn-primary {
+  background: var(--agx-primary);
+  border-color: var(--agx-primary);
+  
+  &:hover {
+    background: var(--agx-primary-light);
+    border-color: var(--agx-primary-light);
+  }
+  
+  &:active {
+    background: var(--agx-primary-dark);
+    border-color: var(--agx-primary-dark);
+  }
+}
+
+.arco-btn-size-small {
+  height: 28px;
+  padding: 0 12px;
+  font-size: var(--agx-font-sm);
+}
+
+.arco-btn-size-large {
+  height: 44px;
+  padding: 0 20px;
+  font-size: var(--agx-font-md);
+}
+
+// ==================== 状态标签 ====================
+.agx-status, .arco-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: var(--agx-font-xs);
+  font-weight: 500;
+  
+  &.success, &.arco-tag-green {
+    background: rgba(82, 196, 26, 0.1);
+    color: var(--agx-success);
+  }
+  
+  &.warning, &.arco-tag-orange {
+    background: rgba(250, 173, 20, 0.1);
+    color: var(--agx-warning);
+  }
+  
+  &.danger, &.arco-tag-red {
+    background: rgba(245, 34, 45, 0.1);
+    color: var(--agx-danger);
+  }
+  
+  &.info, &.arco-tag-blue {
+    background: rgba(24, 144, 255, 0.1);
+    color: var(--agx-info);
+  }
+  
+  &.default, &.arco-tag-gray {
+    background: var(--agx-bg-tertiary);
+    color: var(--agx-text-tertiary);
+  }
+}
+
+// ==================== 统计卡片 ====================
+.agx-stat-card, .arco-statistic {
+  background: var(--agx-bg-primary);
+  border-radius: var(--agx-radius-md);
+  padding: var(--agx-spacing-lg);
+  box-shadow: var(--agx-shadow-sm);
+  
+  .stat-label, .arco-statistic-title {
+    font-size: var(--agx-font-sm);
+    color: var(--agx-text-tertiary);
+    margin-bottom: var(--agx-spacing-xs);
+    font-weight: 400;
+  }
+  
+  .stat-value, .arco-statistic-value {
+    font-size: var(--agx-font-4xl);
+    font-weight: 600;
+    color: var(--agx-text-primary);
+    line-height: 1.2;
+  }
+  
+  .stat-suffix, .arco-statistic-value-suffix {
+    font-size: var(--agx-font-base);
+    color: var(--agx-text-secondary);
+    margin-left: 4px;
+  }
+  
+  .stat-trend {
+    display: flex;
+    align-items: center;
+    margin-top: var(--agx-spacing-sm);
+    font-size: var(--agx-font-xs);
+    
+    &.up { color: var(--agx-success); }
+    &.down { color: var(--agx-danger); }
+  }
+}
+
+// ==================== 数据面板 ====================
+.agx-data-panel {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--agx-spacing-md);
+  margin-bottom: var(--agx-spacing-lg);
+}
+
+// ==================== 操作栏 ====================
+.agx-action-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--agx-spacing-md);
+  flex-wrap: wrap;
+  gap: var(--agx-spacing-sm);
+  
+  .action-left, .action-right {
+    display: flex;
+    gap: var(--agx-spacing-sm);
+    flex-wrap: wrap;
+  }
+}
+
+// ==================== 标签页优化 ====================
+.agx-tabs, .arco-tabs {
+  .arco-tabs-nav-tab {
+    padding: 10px 16px;
+    font-size: var(--agx-font-base);
+  }
+  
+  .arco-tabs-tab-active {
+    color: var(--agx-primary);
+    font-weight: 500;
+  }
+  
+  .arco-tabs-nav-ink {
+    background: var(--agx-primary);
+  }
+}
+
+// ==================== 表单优化 ====================
+.agx-form, .arco-form {
+  .arco-form-item-label {
+    color: var(--agx-text-secondary);
+    font-weight: 500;
+    font-size: var(--agx-font-base);
+  }
+  
+  .arco-input,
+  .arco-select-view,
+  .arco-textarea {
+    border-radius: var(--agx-radius-sm);
+    font-size: var(--agx-font-base);
+    min-height: 36px;
+    
+    &:focus-within {
+      border-color: var(--agx-primary);
+      box-shadow: 0 0 0 2px var(--agx-primary-bg);
+    }
+  }
+  
+  .arco-form-item-message {
+    font-size: var(--agx-font-xs);
+  }
+}
+
+// ==================== 弹窗优化 ====================
+.agx-modal, .arco-modal {
+  .arco-modal-header {
+    padding: var(--agx-spacing-md) var(--agx-spacing-lg);
+    border-bottom: 1px solid var(--agx-border-light);
+    
+    .arco-modal-title {
+      font-size: var(--agx-font-lg);
+      font-weight: 600;
+    }
+  }
+  
+  .arco-modal-body {
+    padding: var(--agx-spacing-lg);
+  }
+  
+  .arco-modal-footer {
+    padding: var(--agx-spacing-md) var(--agx-spacing-lg);
+    border-top: 1px solid var(--agx-border-light);
+  }
+}
+
+// ==================== 分页优化 ====================
+.arco-pagination {
+  margin-top: var(--agx-spacing-md);
+  
+  .arco-pagination-item {
+    min-width: 32px;
+    height: 32px;
+    line-height: 32px;
+    font-size: var(--agx-font-base);
+    border-radius: var(--agx-radius-sm);
+  }
+  
+  .arco-pagination-item-active {
+    background: var(--agx-primary);
+    color: #fff;
+  }
+}
+
+// ==================== 空状态 ====================
+.agx-empty, .arco-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--agx-spacing-2xl) 0;
+  color: var(--agx-text-tertiary);
+  
+  .empty-icon, .arco-empty-image {
+    font-size: 48px;
+    margin-bottom: var(--agx-spacing-md);
+    opacity: 0.5;
+  }
+  
+  .empty-text, .arco-empty-description {
+    font-size: var(--agx-font-base);
+  }
+}
+
+// ==================== 响应式适配 ====================
+// 超大屏 (>1600px)
+@media (min-width: 1600px) {
+  :root {
+    --agx-font-base: 14px;
+  }
+  
+  .agx-data-panel {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+// 大屏 (1200px - 1600px)
+@media (max-width: 1600px) and (min-width: 1200px) {
+  .agx-data-panel {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+// 中屏 (992px - 1200px)
+@media (max-width: 1200px) {
+  .agx-data-panel {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .arco-table-th,
+  .arco-table-td {
+    padding: 10px 12px;
+  }
+}
+
+// 小屏/平板 (768px - 992px)
+@media (max-width: 992px) {
+  :root {
+    --agx-font-base: 13px;
+    --agx-spacing-lg: 20px;
+  }
+  
+  .agx-data-panel {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .agx-content, .work-area {
+    padding: var(--agx-spacing-md);
+  }
+  
+  // 表格水平滚动
+  .arco-table-container {
+    overflow-x: auto;
+  }
+  
+  .arco-table {
+    min-width: 800px;
+  }
+}
+
+// 手机 (<768px)
+@media (max-width: 768px) {
+  :root {
+    --agx-font-base: 13px;
+    --agx-spacing-lg: 16px;
+    --agx-spacing-md: 12px;
+  }
+  
+  body {
+    font-size: 13px;
+  }
+  
+  .agx-content, .work-area {
+    padding: var(--agx-spacing-sm);
+  }
+  
+  .agx-data-panel {
+    grid-template-columns: 1fr;
+    gap: var(--agx-spacing-sm);
+  }
+  
+  .agx-search-bar, .ma-crud .arco-card-body {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--agx-spacing-sm);
+    
+    .arco-input-wrapper,
+    .arco-select-view,
+    .arco-form-item {
+      width: 100% !important;
+      margin-bottom: var(--agx-spacing-sm);
+    }
+  }
+  
+  .agx-action-bar {
+    flex-direction: column;
+    align-items: stretch;
+    
+    .action-left, .action-right {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+  
+  // 表格优化
+  .arco-table-th,
+  .arco-table-td {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  
+  .arco-table {
+    min-width: 600px;
+  }
+  
+  // 按钮调整
+  .arco-btn {
+    height: 32px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+  
+  // 统计卡片
+  .agx-stat-card .stat-value,
+  .arco-statistic-value {
+    font-size: 22px;
+  }
+  
+  // 弹窗全屏
+  .arco-modal {
+    max-width: 100% !important;
+    margin: 0 !important;
+    
+    .arco-modal-content {
+      border-radius: 0;
+    }
+  }
+  
+  // 抽屉全宽
+  .arco-drawer {
+    max-width: 100% !important;
+  }
+}
+
+// 超小屏 (<480px)
+@media (max-width: 480px) {
+  :root {
+    --agx-spacing-lg: 12px;
+    --agx-spacing-md: 8px;
+  }
+  
+  .agx-card, .ma-content-block {
+    padding: var(--agx-spacing-md);
+    border-radius: var(--agx-radius-sm);
+  }
+  
+  .arco-table {
+    min-width: 500px;
+  }
+  
+  .arco-table-th,
+  .arco-table-td {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+}
+
+// ==================== 打印样式 ====================
+@media print {
+  body {
+    background: #fff;
+    font-size: 12px;
+  }
+  
+  .agx-sider,
+  .agx-header,
+  .agx-action-bar,
+  .arco-pagination,
+  .arco-btn {
+    display: none !important;
+  }
+  
+  .agx-content {
+    padding: 0;
+  }
+  
+  .agx-card, .ma-content-block {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+}

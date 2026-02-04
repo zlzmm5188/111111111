@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
+  <defs>
+    <linearGradient id="aus-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#003366"/>
+      <stop offset="100%" stop-color="#002244"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- 背景 -->
+  <rect width="200" height="100" fill="#003366" rx="8"/>
+  
+  <!-- 澳大利亚国徽简化版 - 盾牌 -->
+  <g transform="translate(30, 50)">
+    <!-- 盾牌外框 -->
+    <path d="M0 -20 L-18 -10 L-18 15 C-18 25 0 35 0 35 C0 35 18 25 18 15 L18 -10 Z" 
+          fill="#d4af37" stroke="#fff" stroke-width="1"/>
+    <!-- 盾牌内部 -->
+    <path d="M0 -16 L-14 -8 L-14 12 C-14 20 0 28 0 28 C0 28 14 20 14 12 L14 -8 Z" 
+          fill="#003366"/>
+    <!-- 南十字星 -->
+    <circle cx="0" cy="-5" r="2" fill="#fff"/>
+    <circle cx="-6" cy="2" r="1.5" fill="#fff"/>
+    <circle cx="6" cy="2" r="1.5" fill="#fff"/>
+    <circle cx="-3" cy="10" r="1.5" fill="#fff"/>
+    <circle cx="3" cy="10" r="1.5" fill="#fff"/>
+    <!-- 联邦之星 -->
+    <polygon points="0,18 1.5,21 5,21 2.5,23 3.5,27 0,24.5 -3.5,27 -2.5,23 -5,21 -1.5,21" fill="#d4af37" transform="scale(0.5) translate(0,-20)"/>
+  </g>
+  
+  <!-- AUSTRAC 文字 -->
+  <text x="115" y="45" text-anchor="middle" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="2">AUSTRAC</text>
+  
+  <!-- 副标题 -->
+  <text x="115" y="62" text-anchor="middle" fill="#d4af37" font-family="Arial, sans-serif" font-size="6" letter-spacing="0.5">AUSTRALIAN GOVERNMENT</text>
+  
+  <!-- 底部线 -->
+  <rect x="60" y="72" width="110" height="1" fill="#d4af37" opacity="0.6"/>
+</svg>

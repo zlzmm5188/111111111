@@ -1,0 +1,48 @@
+/* ==================== 中间AGX特殊样式 ==================== */
+
+/* 中间tab的容器 - 让logo更突出 */
+.oriole-tab-item.tab-center {
+  padding: 4px 0; /* 上下padding更小，logo居中 */
+}
+
+.oriole-tab-item.tab-center .oriole-tab-item__icon {
+  width: 44px;  /* 更大 */
+  height: 44px;
+  background: linear-gradient(135deg, rgba(201, 169, 98, 0.15), rgba(201, 169, 98, 0.05)); /* 淡金色背景 */
+  border-radius: 50%; /* 圆形背景 */
+  box-shadow: 0 4px 12px rgba(201, 169, 98, 0.2); /* 金色阴影 */
+  transition: all 180ms ease;
+}
+
+/* 激活状态的中间tab */
+.oriole-tab-item.tab-center.active .oriole-tab-item__icon {
+  background: linear-gradient(135deg, rgba(201, 169, 98, 0.25), rgba(201, 169, 98, 0.1));
+  box-shadow: 0 6px 16px rgba(201, 169, 98, 0.4), 0 0 20px rgba(201, 169, 98, 0.2); /* 发光效果 */
+  transform: translateY(-4px) scale(1.1); /* 上移+放大 */
+}
+
+/* 点击效果 */
+.oriole-tab-item.tab-center:active .oriole-tab-item__icon {
+  transform: translateY(-2px) scale(1.05);
+}
+
+/* 大logo样式 */
+.tab-logo-lg {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  transition: all 180ms ease;
+}
+
+.oriole-tab-item.tab-center.active .tab-logo-lg {
+  transform: scale(1.12); /* 激活时略微放大 */
+}
+
+.oriole-tab-item.tab-center:active .tab-logo-lg {
+  transform: scale(1.05);
+}
+
+/* 移除中间tab的底部横线 */
+.oriole-tab-item.tab-center.active::after {
+  display: none;
+}

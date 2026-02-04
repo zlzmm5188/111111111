@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800">
+  <defs>
+    <linearGradient id="bg4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5f8fa"/>
+      <stop offset="100%" stop-color="#e8eef3"/>
+    </linearGradient>
+  </defs>
+  
+  <rect width="600" height="800" fill="url(#bg4)"/>
+  
+  <rect x="20" y="20" width="560" height="760" fill="none" stroke="#00008b" stroke-width="4"/>
+  <rect x="26" y="26" width="548" height="748" fill="none" stroke="#00008b" stroke-width="1"/>
+  
+  <text x="300" y="50" text-anchor="middle" fill="#00008b" font-family="Georgia, serif" font-size="11" letter-spacing="3">AUSTRALIAN GOVERNMENT</text>
+  
+  <circle cx="300" cy="100" r="35" fill="none" stroke="#00008b" stroke-width="2"/>
+  <circle cx="300" cy="100" r="28" fill="none" stroke="#00008b" stroke-width="1"/>
+  <polygon points="300,72 303,82 313,82 305,88 308,98 300,92 292,98 295,88 287,82 297,82" fill="#00008b"/>
+  <text x="300" y="118" text-anchor="middle" fill="#00008b" font-family="Arial, sans-serif" font-size="7">AUSTRALIA</text>
+  
+  <text x="300" y="160" text-anchor="middle" fill="#00008b" font-family="Georgia, serif" font-size="18" font-weight="700" letter-spacing="4">AUSTRAC</text>
+  <text x="300" y="180" text-anchor="middle" fill="#666" font-family="Arial, sans-serif" font-size="8">Australian Transaction Reports and Analysis Centre</text>
+  
+  <text x="300" y="225" text-anchor="middle" fill="#1a1a1a" font-family="Georgia, serif" font-size="22" font-weight="700">CERTIFICATE</text>
+  <text x="300" y="250" text-anchor="middle" fill="#1a1a1a" font-family="Georgia, serif" font-size="13">of Registration</text>
+  <text x="300" y="270" text-anchor="middle" fill="#666" font-family="Arial, sans-serif" font-size="10">Digital Currency Exchange Provider</text>
+  
+  <rect x="150" y="285" width="300" height="2" fill="#00008b"/>
+  
+  <text x="300" y="320" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="11">This is to certify that</text>
+  
+  <text x="300" y="360" text-anchor="middle" fill="#00008b" font-family="Georgia, serif" font-size="18" font-weight="700">ASCENDA GLOBAL PTY LTD</text>
+  
+  <text x="300" y="395" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="10">ABN: 12 345 678 901</text>
+  
+  <text x="300" y="430" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="10">is registered with AUSTRAC as a</text>
+  <text x="300" y="455" text-anchor="middle" fill="#00008b" font-family="Georgia, serif" font-size="14" font-weight="600">Digital Currency Exchange Provider</text>
+  <text x="300" y="480" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="10">under the Anti-Money Laundering and</text>
+  <text x="300" y="498" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="10">Counter-Terrorism Financing Act 2006</text>
+  
+  <rect x="175" y="520" width="250" height="60" fill="rgba(0,0,139,0.05)" rx="5"/>
+  <text x="300" y="545" text-anchor="middle" fill="#666" font-family="Arial, sans-serif" font-size="9">DCE REGISTRATION NUMBER</text>
+  <text x="300" y="570" text-anchor="middle" fill="#00008b" font-family="Georgia, serif" font-size="20" font-weight="700">100648756</text>
+  
+  <text x="300" y="620" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="10">Registration Date: April 15, 2024</text>
+  <text x="300" y="640" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="10">Status: Active</text>
+  
+  <text x="150" y="710" text-anchor="middle" fill="#333" font-family="Brush Script MT, cursive" font-size="15">Nicole Rose</text>
+  <line x1="80" y1="720" x2="220" y2="720" stroke="#333" stroke-width="1"/>
+  <text x="150" y="735" text-anchor="middle" fill="#333" font-family="Arial, sans-serif" font-size="9">CEO, AUSTRAC</text>
+  
+  <circle cx="450" cy="710" r="32" fill="none" stroke="#00008b" stroke-width="2"/>
+  <circle cx="450" cy="710" r="25" fill="none" stroke="#00008b" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="450" y="705" text-anchor="middle" fill="#00008b" font-family="Arial, sans-serif" font-size="7" font-weight="600">AUSTRAC</text>
+  <text x="450" y="715" text-anchor="middle" fill="#00008b" font-family="Arial, sans-serif" font-size="6">OFFICIAL</text>
+  <text x="450" y="724" text-anchor="middle" fill="#00008b" font-family="Arial, sans-serif" font-size="6">REGISTRATION</text>
+</svg>

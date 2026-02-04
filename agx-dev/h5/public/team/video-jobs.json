@@ -1,0 +1,37 @@
+{
+  "founder": {
+    "name": "弗拉基米尔·亚历山德罗维奇·伊万诺夫",
+    "error": "403 {\"detail\":\"Unable to authenticate user with API Key\"}",
+    "status": "failed"
+  },
+  "president": {
+    "name": "陈启明",
+    "error": "403 {\"detail\":\"Unable to authenticate user with API Key\"}",
+    "status": "failed"
+  },
+  "analyst": {
+    "name": "李鹏",
+    "error": "403 {\"detail\":\"Unable to authenticate user with API Key\"}",
+    "status": "failed"
+  },
+  "marketing": {
+    "name": "郭昭晏",
+    "error": "403 {\"detail\":\"Unable to authenticate user with API Key\"}",
+    "status": "failed"
+  },
+  "legal": {
+    "name": "周刚",
+    "error": "403 {\"detail\":\"Unable to authenticate user with API Key\"}",
+    "status": "failed"
+  },
+  "social": {
+    "name": "顾凌云",
+    "error": "403 {\"detail\":\"Unable to authenticate user with API Key\"}",
+    "status": "failed"
+  },
+  "designer": {
+    "name": "林鑫",
+    "error": "403 {\"detail\":\"Unable to authenticate user with API Key\"}",
+    "status": "failed"
+  }
+}

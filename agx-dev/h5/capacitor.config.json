@@ -1,0 +1,23 @@
+{
+  "appId": "com.agx.ecosystem",
+  "appName": "AGX",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true,
+    "allowNavigation": [
+      "*"
+    ]
+  },
+  "android": {
+    "buildOptions": {
+      "keystorePath": "",
+      "keystoreAlias": ""
+    }
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "configureScheme": false
+  }
+}

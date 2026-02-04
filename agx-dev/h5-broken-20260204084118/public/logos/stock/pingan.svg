@@ -1,0 +1,6 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100" height="100" rx="12" fill="#FF6600"/>
+  <text x="50" y="38" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold" font-family="Arial">平安银行</text>
+  <path d="M35,55 L50,45 L65,55 L65,75 L35,75 Z" fill="#fff"/>
+  <rect x="45" y="60" width="10" height="15" fill="#FF6600"/>
+</svg>

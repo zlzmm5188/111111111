@@ -1,0 +1,187 @@
+<template>
+  <nav class="oriole-tabbar">
+    <div class="oriole-tabbar__inner">
+      <router-link
+        v-for="item in tabs"
+        :key="item.path"
+        :to="item.path"
+        class="oriole-tab-item"
+        :class="{ active: isActive(item.path) }"
+      >
+        <div class="oriole-tab-item__icon">
+          <!-- 首页 -->
+          <svg v-if="item.id === 'home'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+            <path d="M9 22V12h6v10"/>
+          </svg>
+
+          <!-- 行情 -->
+          <svg v-else-if="item.id === 'markets'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M3 3v18h18"/>
+            <path d="M7 16l4-4 4 4 5-6"/>
+          </svg>
+
+          <!-- AGX -->
+          <img v-else-if="item.id === 'trade'" src="/company-logo.png" alt="AGX" class="tab-logo">
+
+          <!-- 广场 -->
+          <svg v-else-if="item.id === 'square'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+            <path d="M16 3.13a4 4 0 010 7.75"/>
+          </svg>
+
+          <!-- 我的 -->
+          <svg v-else-if="item.id === 'mine'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="7" r="4"/>
+            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+          </svg>
+        </div>
+        <span class="oriole-tab-item__label">{{ item.label }}</span>
+      </router-link>
+    </div>
+  </nav>
+</template>
+
+<script setup>
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+
+const tabs = [
+  { id: 'home', path: '/home', label: '首页' },
+  { id: 'markets', path: '/markets', label: '行情' },
+  { id: 'trade', path: '/agx', label: 'AGX' },
+  { id: 'square', path: '/square', label: '广场' },
+  { id: 'mine', path: '/mine', label: '我的' }
+]
+
+const isActive = (path) => {
+  return route.path === path || (path === '/home' && route.path === '/')
+}
+</script>
+
+<style scoped>
+.oriole-tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 428px;
+  margin: 0 auto;
+  height: calc(56px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* Pro Max 3D 风格背景 - 与个人中心同步 */
+  background: linear-gradient(180deg, #1A222B 0%, #0D1117 100%);
+  border-top: 1px solid rgba(200, 170, 110, 0.15);
+  z-index: 300;
+  /* 顶部金色装饰线 */
+  box-shadow: inset 0 1px 0 rgba(200, 170, 110, 0.2);
+  /* 移动端优化 */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.oriole-tabbar__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 56px;
+  width: 100%;
+  padding: 0 8px;
+}
+
+.oriole-tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--text-tertiary, #848E9C);
+  text-decoration: none;
+  transition: all 150ms ease;
+  padding: 6px 0;
+  position: relative;
+  cursor: pointer;
+  /* 触摸优化 */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  /* GPU 加速 */
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* 点击反馈 */
+.oriole-tab-item:active {
+  transform: scale(0.92);
+}
+
+.oriole-tab-item.active {
+  color: var(--color-brand, #C9A962);
+}
+
+.oriole-tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2px;
+  background: var(--color-brand, #C9A962);
+  border-radius: 1px;
+}
+
+/* 图标 */
+.oriole-tab-item__icon {
+  width: 32px;
+  height: 32px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.oriole-tab-item__icon svg {
+  width: 26px;
+  height: 26px;
+  stroke-width: 2.5;
+  transition: transform 150ms ease;
+}
+
+/* 激活状态图标动画 */
+.oriole-tab-item.active .oriole-tab-item__icon svg {
+  transform: translateY(-1px);
+  stroke-width: 2.8;
+}
+
+.oriole-tab-item:active .oriole-tab-item__icon svg {
+  transform: scale(0.95);
+}
+
+/* 标签 */
+.oriole-tab-item__label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* AGX logo图片 */
+.tab-logo {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  transition: transform 150ms ease;
+}
+
+.oriole-tab-item.active .tab-logo {
+  transform: translateY(-1px);
+}
+
+.oriole-tab-item:active .tab-logo {
+  transform: scale(0.95);
+}
+</style>

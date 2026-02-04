@@ -1,0 +1,212 @@
+/**
+ * 全局数字字体样式
+ * 统一所有数字显示，使用等宽、清晰的专业数字字体
+ */
+
+/* ==================== 数字字体基础样式 ==================== */
+.font-digit,
+.font-number,
+.font-amount,
+.font-percent {
+  /* 使用等宽字体，数字对齐 */
+  font-family: 'SF Mono', 'Monaco', 'Consolas', 'Courier New', monospace;
+
+  /* 启用数字特性：等宽数字、表格数字对齐 */
+  font-variant-numeric: tabular-nums;
+
+  /* 优化显示 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* 字重：正常粗细，不使用太粗或太细 */
+  font-weight: 500;
+
+  /* 字间距：稍微紧凑 */
+  letter-spacing: -0.02em;
+}
+
+/* ==================== 大数字（统计数据） ==================== */
+.font-digit-large {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+/* ==================== 中等数字（表格、卡片） ==================== */
+.font-digit-medium {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* ==================== 小数字（辅助信息） ==================== */
+.font-digit-small {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* ==================== 金额数字（带颜色） ==================== */
+.font-amount-primary {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--color-text-1);
+}
+
+.font-amount-secondary {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--color-text-2);
+}
+
+.font-amount-success {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #00B42A;
+}
+
+.font-amount-warning {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #FF7D00;
+}
+
+.font-amount-danger {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #F53F3F;
+}
+
+/* ==================== 百分比 ==================== */
+.font-percent {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.font-percent::after {
+  content: '%';
+  margin-left: 1px;
+}
+
+/* ==================== 强制所有数字使用统一字体 ==================== */
+/* 统计卡片中的数字 */
+.stat-value,
+.compact-stat-value,
+.agx-stat-value {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace !important;
+  font-variant-numeric: tabular-nums !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* 表格中的数字列 */
+.arco-table-column[align="right"],
+.arco-table-column[align*="right"] {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace !important;
+  font-variant-numeric: tabular-nums !important;
+  font-weight: 500 !important;
+}
+
+/* 余额、金额等数字 */
+.balance-value,
+.asset-value,
+.amount-value,
+.font-mono {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace !important;
+  font-variant-numeric: tabular-nums !important;
+  font-weight: 500 !important;
+}
+
+/* ==================== 特殊场景：大额数字 ==================== */
+.font-digit-xl {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+/* ==================== 特殊场景：超大标题数字 ==================== */
+.font-digit-xxl {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 1;
+}
+
+/* ==================== 辅助类：颜色变体 ==================== */
+.text-number {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.text-number-lg {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.text-number-sm {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+  font-size: 12px;
+}
+
+/* ==================== 优化特定组件的数字显示 ==================== */
+
+/* Arco Design 表格 */
+:deep(.arco-table) {
+  .arco-table-cell {
+    /* 数字列自动使用等宽字体 */
+    &[align="right"],
+    &[align="center"] {
+      font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+}
+
+/* Arco Design 统计卡片 */
+:deep(.arco-statistic) {
+  .arco-statistic-value {
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace !important;
+    font-variant-numeric: tabular-nums !important;
+    font-weight: 600 !important;
+  }
+}
+
+/* Arco Design Tag 内的数字 */
+:deep(.arco-tag) {
+  .font-digit {
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+  }
+}

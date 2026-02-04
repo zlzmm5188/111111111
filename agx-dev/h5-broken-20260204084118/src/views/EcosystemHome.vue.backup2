@@ -1,0 +1,717 @@
+<template>
+  <div class="ecosystem-page">
+    <!-- 顶部装饰背景 -->
+    <div class="page-bg"></div>
+
+    <!-- 主内容区 -->
+    <div class="page-content px-page">
+
+      <!-- AGX 价格卡片 -->
+      <div class="hero-card">
+        <div class="hero-bg"></div>
+        <div class="token-header">
+          <div class="token-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M12 7v5l3 3"/>
+            </svg>
+          </div>
+          <div class="token-info">
+            <h2 class="token-title">AGX/USDT</h2>
+            <span class="token-subtitle">黄金锚定资产 · 100%储备</span>
+          </div>
+        </div>
+
+        <div class="price-section">
+          <div class="current-price">{{ agxPrice }}</div>
+          <div class="price-change" :class="priceChange >= 0 ? 'up' : 'down'">
+            {{ priceChange >= 0 ? '+' : '' }}{{ priceChange }}%
+          </div>
+        </div>
+
+        <div class="market-stats">
+          <div class="stat-item">
+            <span class="stat-label">24H高</span>
+            <span class="stat-value up">${{ highPrice }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">24H低</span>
+            <span class="stat-value down">${{ lowPrice }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">24H额</span>
+            <span class="stat-value">{{ volume }}M</span>
+          </div>
+        </div>
+
+        <router-link to="/trade?pair=AGX_USDT" class="buy-btn">
+          <span>立即交易</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </router-link>
+      </div>
+
+      <!-- 理财服务 -->
+      <section class="section">
+        <h3 class="section-title">理财服务</h3>
+        <div class="service-grid">
+          <router-link to="/earn" class="service-card earn">
+            <div class="service-header">
+              <div class="service-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+              </div>
+              <div class="service-badge">{{ totalEarned }} USDT</div>
+            </div>
+            <h4 class="service-name">持币生金</h4>
+            <p class="service-desc">灵活存取 · 每日计息</p>
+            <div class="service-users">{{ earnedUsers }}人参与</div>
+          </router-link>
+
+          <router-link to="/mining" class="service-card mining">
+            <div class="service-header">
+              <div class="service-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+              </div>
+              <div class="service-badge">{{ totalMined }} USDT</div>
+            </div>
+            <h4 class="service-name">合约挖矿</h4>
+            <p class="service-desc">质押AGX · 返利USDT</p>
+            <div class="service-users">{{ minedUsers }}人参与</div>
+          </router-link>
+        </div>
+      </section>
+
+      <!-- 交易服务 -->
+      <section class="section">
+        <h3 class="section-title">交易服务</h3>
+        <div class="trade-grid">
+          <router-link to="/trade" class="trade-card">
+            <div class="trade-icon spot">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M3 3v18h18"/>
+                <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+              </svg>
+            </div>
+            <h4>现货交易</h4>
+            <p>多币种交易</p>
+          </router-link>
+
+          <router-link to="/contract" class="trade-card">
+            <div class="trade-icon contract">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12,6 12,12 16,14"/>
+              </svg>
+            </div>
+            <h4>秒合约</h4>
+            <p>30秒快速交易</p>
+          </router-link>
+
+          <router-link to="/otc" class="trade-card">
+            <div class="trade-icon otc">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="2" y="5" width="20" height="14" rx="2"/>
+                <line x1="2" y1="10" x2="22" y2="10"/>
+              </svg>
+            </div>
+            <h4>OTC交易</h4>
+            <p>法币出入金</p>
+          </router-link>
+
+          <router-link to="/gold" class="trade-card">
+            <div class="trade-icon gold">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/>
+                <path d="M12 18V6"/>
+              </svg>
+            </div>
+            <h4>黄金交易</h4>
+            <p>100%金锚定</p>
+          </router-link>
+        </div>
+      </section>
+
+      <!-- 生态模块 -->
+      <section class="section">
+        <h3 class="section-title">生态模块</h3>
+        <div class="eco-grid">
+          <router-link to="/pool" class="eco-card">
+            <div class="eco-icon pool">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                <polyline points="3.27,6.96 12,12.01 20.73,6.96"/>
+                <line x1="12" y1="22.08" x2="12" y2="12"/>
+              </svg>
+            </div>
+            <h4>流动性矿池</h4>
+            <p>提供流动性获得奖励</p>
+          </router-link>
+
+          <router-link to="/ieo" class="eco-card">
+            <div class="eco-icon ieo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2"/>
+              </svg>
+            </div>
+            <h4>新币申购</h4>
+            <p>优质项目首发</p>
+          </router-link>
+
+          <router-link to="/airdrop" class="eco-card">
+            <div class="eco-icon airdrop">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/>
+                <line x1="16" y1="8" x2="2" y2="22"/>
+                <line x1="17.5" y1="15" x2="9" y2="15"/>
+              </svg>
+            </div>
+            <h4>空投奖励</h4>
+            <p>代币空投活动</p>
+          </router-link>
+
+          <div class="eco-card coming-soon">
+            <div class="eco-icon nft">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21,15 16,10 5,21"/>
+              </svg>
+            </div>
+            <h4>NFT市场</h4>
+            <p class="coming-tag">即将上线</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 邀请返佣 -->
+      <section class="section">
+        <router-link to="/invite" class="invite-card">
+          <div class="invite-left">
+            <div class="invite-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="8.5" cy="7" r="4"/>
+                <line x1="20" y1="8" x2="20" y2="14"/>
+                <line x1="23" y1="11" x2="17" y2="11"/>
+              </svg>
+            </div>
+            <div class="invite-info">
+              <h3>邀请好友</h3>
+              <p>最高30%返佣奖励</p>
+            </div>
+          </div>
+          <svg class="invite-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9,18 15,12 9,6"/>
+          </svg>
+        </router-link>
+      </section>
+
+      <!-- 底部安全区 -->
+      <div class="safe-bottom"></div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+
+defineOptions({
+  name: 'EcosystemHome'
+})
+
+// 数据
+const agxPrice = ref('$0.065')
+const priceChange = ref('+2.35')
+const highPrice = ref('0.068')
+const lowPrice = ref('0.062')
+const volume = ref('12.6')
+const totalEarned = ref('8,562')
+const earnedUsers = ref('12,453')
+const totalMined = ref('3,847')
+const minedUsers = ref('8,231')
+
+onMounted(() => {
+  // 可以从后端加载实时数据
+})
+</script>
+
+<style scoped>
+/* ========== 页面容器 ========== */
+.ecosystem-page {
+  width: 100%;
+  max-width: var(--page-max-width, 428px);
+  min-height: 100vh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #0a0c10 0%, #0f1318 50%, #0a0c10 100%);
+  position: relative;
+}
+
+.page-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: var(--page-max-width, 428px);
+  margin: 0 auto;
+  background:
+    radial-gradient(ellipse at top right, rgba(200, 170, 110, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom left, rgba(14, 203, 129, 0.04) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.page-content {
+  position: relative;
+  z-index: 1;
+  padding: 16px 12px calc(90px + env(safe-area-inset-bottom));
+}
+
+a:active { opacity: 0.9; }
+
+/* ========== Hero Card ========== */
+.hero-card {
+  position: relative;
+  margin-bottom: 16px;
+  padding: 20px;
+  min-height: 160px;
+  background: linear-gradient(135deg, rgba(30, 38, 50, 0.95), rgba(22, 27, 34, 0.9));
+  border: 1px solid rgba(200, 170, 110, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle at center, rgba(200, 170, 110, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.token-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.token-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(200, 170, 110, 0.2), rgba(200, 170, 110, 0.1));
+  border: 1.5px solid rgba(200, 170, 110, 0.3);
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(200, 170, 110, 0.15);
+}
+
+.token-icon svg {
+  width: 24px;
+  height: 24px;
+  color: #C8AA6E;
+}
+
+.token-info {
+  flex: 1;
+}
+
+.token-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #E6EDF3;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.3px;
+}
+
+.token-subtitle {
+  font-size: 12px;
+  color: #8B949E;
+}
+
+.price-section {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.current-price {
+  font-size: 36px;
+  font-weight: 800;
+  color: #E6EDF3;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: -1.5px;
+}
+
+.price-change {
+  font-size: 14px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+}
+
+.price-change.up {
+  background: rgba(14, 203, 129, 0.15);
+  color: #10B981;
+}
+
+.price-change.down {
+  background: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
+}
+
+.market-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
+  z-index: 1;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #8B949E;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #E6EDF3;
+  font-family: 'Inter', sans-serif;
+}
+
+.stat-value.up { color: #10B981; }
+.stat-value.down { color: #EF4444; }
+
+.buy-btn {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 50px;
+  background: linear-gradient(135deg, #C8AA6E, #A08050);
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0B0E11;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 16px rgba(200, 170, 110, 0.3);
+  text-decoration: none;
+}
+
+.buy-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(200, 170, 110, 0.3);
+}
+
+.buy-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ========== Section ========== */
+.section {
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #E6EDF3;
+  margin: 0 0 12px 0;
+  letter-spacing: -0.3px;
+}
+
+/* ========== Service Grid ========== */
+.service-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.service-card {
+  position: relative;
+  display: block;
+  padding: 16px;
+  background: linear-gradient(145deg, rgba(30, 38, 50, 0.95), rgba(22, 27, 34, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  text-decoration: none;
+}
+
+.service-card:active {
+  transform: scale(0.98);
+  background: rgba(35, 40, 50, 0.95);
+}
+
+.service-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.service-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(200, 170, 110, 0.1);
+  border-radius: 12px;
+}
+
+.service-icon svg {
+  width: 20px;
+  height: 20px;
+  color: #C8AA6E;
+}
+
+.service-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #10B981;
+  background: rgba(14, 203, 129, 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.service-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #E6EDF3;
+  margin: 0 0 4px 0;
+}
+
+.service-desc {
+  font-size: 12px;
+  color: #8B949E;
+  margin: 0 0 8px 0;
+}
+
+.service-users {
+  font-size: 11px;
+  color: #6B7280;
+}
+
+/* ========== Trade Grid ========== */
+.trade-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.trade-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 12px;
+  background: linear-gradient(145deg, rgba(30, 38, 50, 0.95), rgba(22, 27, 34, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.trade-card:active {
+  transform: scale(0.98);
+}
+
+.trade-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  margin-bottom: 10px;
+}
+
+.trade-icon svg {
+  width: 22px;
+  height: 22px;
+  color: #D4AF37;
+}
+
+.trade-card h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #E6EDF3;
+  margin: 0 0 4px 0;
+}
+
+.trade-card p {
+  font-size: 11px;
+  color: #8B949E;
+  margin: 0;
+}
+
+/* ========== Eco Grid ========== */
+.eco-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.eco-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 12px;
+  background: linear-gradient(145deg, rgba(30, 38, 50, 0.95), rgba(22, 27, 34, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.eco-card.coming-soon {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.eco-card:active:not(.coming-soon) {
+  transform: scale(0.98);
+}
+
+.eco-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  margin-bottom: 10px;
+}
+
+.eco-icon svg {
+  width: 22px;
+  height: 22px;
+  color: #C8AA6E;
+}
+
+.eco-card h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #E6EDF3;
+  margin: 0 0 4px 0;
+}
+
+.eco-card p {
+  font-size: 11px;
+  color: #8B949E;
+  margin: 0;
+}
+
+.coming-tag {
+  color: #C8AA6E;
+}
+
+/* ========== Invite Card ========== */
+.invite-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 16px;
+  background: linear-gradient(135deg, rgba(200, 170, 110, 0.12), rgba(200, 170, 110, 0.04));
+  border: 1px solid rgba(200, 170, 110, 0.25);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  text-decoration: none;
+}
+
+.invite-card:active {
+  background: linear-gradient(135deg, rgba(200, 170, 110, 0.18), rgba(200, 170, 110, 0.08));
+}
+
+.invite-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.invite-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(200, 170, 110, 0.15);
+  border-radius: 12px;
+}
+
+.invite-icon svg {
+  width: 22px;
+  height: 22px;
+  color: #C8AA6E;
+}
+
+.invite-info h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #C8AA6E;
+  margin: 0 0 4px 0;
+}
+
+.invite-info p {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+.invite-arrow {
+  width: 20px;
+  height: 20px;
+  color: #C8AA6E;
+  flex-shrink: 0;
+}
+
+/* ========== Bottom ========== */
+.safe-bottom {
+  height: calc(90px + env(safe-area-inset-bottom));
+}
+</style>

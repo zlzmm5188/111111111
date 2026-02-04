@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker compose:*)",
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(ss:*)",
+      "Bash(ls:*)",
+      "Bash(nginx:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(systemctl reload:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run)",
+      "Bash(pkill:*)",
+      "Bash(lsof:*)",
+      "Read(//etc/nginx/**)",
+      "Read(//etc/nginx/sites-available/**)",
+      "Read(//etc/nginx/conf.d/**)",
+      "Read(//root/agx-dev/**)",
+      "Bash(sort:*)"
+    ]
+  }
+}

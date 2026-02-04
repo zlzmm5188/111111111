@@ -1,0 +1,1387 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, DataSource } from 'typeorm';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcryptjs';
+import { User, Admin, Wallet, UserInvite, Coin, Kyc, Recharge, Withdraw, Notice, GoldAccount, InviteReward, Asset, AssetLog, Config } from '../../entities';
+import { BusinessException } from '../../common';
+import { RegisterDto, LoginDto, ChangePasswordDto, UpdateProfileDto, SubmitKycDto, WithdrawDto, GetDepositAddressDto } from './account.dto';
+import { JwtPayload } from '../auth/jwt.strategy';
+import { TelegramNotifyService } from '../notify/notify.service';
+
+@Injectable()
+export class AccountService {
+  private readonly logger = new Logger(AccountService.name);
+
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+    @InjectRepository(Admin)
+    private readonly adminRepo: Repository<Admin>,
+    @InjectRepository(Wallet)
+    private readonly walletRepo: Repository<Wallet>,
+    @InjectRepository(UserInvite)
+    private readonly userInviteRepo: Repository<UserInvite>,
+    @InjectRepository(Coin)
+    private readonly coinRepo: Repository<Coin>,
+    @InjectRepository(Kyc)
+    private readonly kycRepo: Repository<Kyc>,
+    @InjectRepository(Recharge)
+    private readonly rechargeRepo: Repository<Recharge>,
+    @InjectRepository(Withdraw)
+    private readonly withdrawRepo: Repository<Withdraw>,
+    @InjectRepository(Notice)
+    private readonly noticeRepo: Repository<Notice>,
+    @InjectRepository(GoldAccount)
+    private readonly goldAccountRepo: Repository<GoldAccount>,
+    @InjectRepository(InviteReward)
+    private readonly inviteRewardRepo: Repository<InviteReward>,
+    @InjectRepository(AssetLog)
+    private readonly assetLogRepo: Repository<AssetLog>,
+    @InjectRepository(Config)
+    private readonly configRepo: Repository<Config>,
+    private readonly jwtService: JwtService,
+    private readonly telegramNotify: TelegramNotifyService,
+    private readonly dataSource: DataSource,
+  ) {}
+
+  /**
+   * 生成 UID（8位数字）
+   */
+  private generateUid(): string {
+    const base = 10000000;
+    const random = Math.floor(Math.random() * 90000000);
+    return String(base + random);
+  }
+
+  /**
+   * 生成邀请码（6位大写字母数字）
+   */
+  private generateInviteCode(): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  }
+
+  /**
+   * 验证用户名格式（字母数字混合，8位以上）
+   */
+  private validateUsername(username: string): { valid: boolean; message: string } {
+    if (!username || typeof username !== 'string') {
+      return { valid: false, message: '用户名不能为空' };
+    }
+
+    const trimmedUsername = username.trim();
+
+    // 长度验证：8位或以上
+    if (trimmedUsername.length < 8) {
+      return { valid: false, message: '用户名至少需要8个字符' };
+    }
+
+    if (trimmedUsername.length > 20) {
+      return { valid: false, message: '用户名不能超过20个字符' };
+    }
+
+    // 只允许字母和数字
+    if (!/^[a-zA-Z0-9]+$/.test(trimmedUsername)) {
+      return { valid: false, message: '用户名只能包含字母和数字' };
+    }
+
+    // 必须同时包含字母和数字（混合）
+    const hasLetter = /[a-zA-Z]/.test(trimmedUsername);
+    const hasNumber = /\d/.test(trimmedUsername);
+
+    if (!hasLetter || !hasNumber) {
+      return { valid: false, message: '用户名必须同时包含字母和数字' };
+    }
+
+    return { valid: true, message: '用户名格式正确' };
+  }
+
+  /**
+   * 验证密码强度（禁止弱密码，必须包含大小写字母+数字）
+   */
+  private validatePasswordStrength(password: string): { valid: boolean; message: string } {
+    if (!password || typeof password !== 'string') {
+      return { valid: false, message: '密码不能为空' };
+    }
+
+    const trimmedPassword = password.trim();
+
+    if (trimmedPassword.length < 8) {
+      return { valid: false, message: '密码至少需要8位' };
+    }
+
+    if (trimmedPassword.length > 20) {
+      return { valid: false, message: '密码不能超过20位' };
+    }
+
+    // 检查是否包含大写字母
+    const hasUpperCase = /[A-Z]/.test(trimmedPassword);
+    // 检查是否包含小写字母
+    const hasLowerCase = /[a-z]/.test(trimmedPassword);
+    // 检查是否包含数字
+    const hasNumber = /\d/.test(trimmedPassword);
+
+    // 必须同时包含大写字母、小写字母和数字
+    if (!hasUpperCase || !hasLowerCase || !hasNumber) {
+      return { valid: false, message: '密码必须同时包含大写字母、小写字母和数字' };
+    }
+
+    // 禁止纯数字
+    if (/^\d+$/.test(trimmedPassword)) {
+      return { valid: false, message: '密码不能是纯数字' };
+    }
+
+    // 禁止纯字母
+    if (/^[a-zA-Z]+$/.test(trimmedPassword)) {
+      return { valid: false, message: '密码不能是纯字母' };
+    }
+
+    // 常见弱密码列表
+    const weakPasswords = [
+      'password', 'Password', 'PASSWORD', 'password1', 'Password1', 'PASSWORD1',
+      '12345678', '123456789', '1234567890',
+      'qwerty123', 'Qwerty123', 'QWERTY123',
+      'abc12345', 'Abc12345', 'ABC12345',
+      '11111111', '00000000', '88888888',
+      'admin123', 'Admin123', 'ADMIN123',
+      'root1234', 'Root1234', 'ROOT1234',
+      'test1234', 'Test1234', 'TEST1234',
+      'iloveyou', 'ILoveYou', 'ILOVEYOU',
+      'sunshine', 'Sunshine', 'SUNSHINE',
+      'princess', 'Princess', 'PRINCESS',
+      'aa123456', 'Aa123456', 'AA123456',
+      'a1234567', 'A1234567', 'A12345678',
+    ];
+
+    if (weakPasswords.includes(trimmedPassword)) {
+      return { valid: false, message: '密码过于简单，请设置更安全的密码' };
+    }
+
+    // 检查连续字符
+    if (this.hasSequentialChars(trimmedPassword, 5)) {
+      return { valid: false, message: '密码不能包含连续的字符序列' };
+    }
+
+    // 检查重复字符
+    if (/(.)\1{4,}/.test(trimmedPassword)) {
+      return { valid: false, message: '密码不能包含过多重复字符' };
+    }
+
+    return { valid: true, message: '密码强度符合要求' };
+  }
+
+  /**
+   * 检查是否包含连续字符序列
+   */
+  private hasSequentialChars(str: string, minLength: number): boolean {
+    const lower = str.toLowerCase();
+    const digits = '0123456789';
+    const digitsReverse = '9876543210';
+    const letters = 'abcdefghijklmnopqrstuvwxyz';
+    const lettersReverse = 'zyxwvutsrqponmlkjihgfedcba';
+    const keyboard = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
+
+    for (let i = 0; i <= lower.length - minLength; i++) {
+      const sub = lower.substring(i, i + minLength);
+      
+      if (digits.includes(sub) || digitsReverse.includes(sub)) {
+        return true;
+      }
+      
+      if (letters.includes(sub) || lettersReverse.includes(sub)) {
+        return true;
+      }
+      
+      for (const row of keyboard) {
+        if (row.includes(sub)) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }
+
+  /**
+   * 格式化日期为 YYYY-MM-DD HH:mm:ss
+   */
+  private formatDate(date: Date): string {
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  }
+
+  /**
+   * 用户注册
+   */
+
+  /**
+   * 获取下一个要分配的管理员ID（轮询分配）
+   * 自动分流：新注册用户自动分配给非超级管理员
+   */
+  private async getNextAssignedAdmin(): Promise<number | null> {
+    try {
+      // 获取所有非超级管理员（adminGroup != 0 且状态正常）
+      const admins = await this.adminRepo.find({
+        where: { status: 1 },
+        order: { id: 'ASC' }
+      });
+      
+      // 过滤出非超级管理员
+      const groupAdmins = admins.filter(a => a.adminGroup && a.adminGroup !== 0);
+      
+      if (groupAdmins.length === 0) {
+        return null; // 没有可分配的管理员
+      }
+      
+      // 查询每个管理员当前分配的用户数量
+      const adminCounts = await Promise.all(
+        groupAdmins.map(async (admin) => {
+          const count = await this.userRepo.count({ where: { assignedAdminId: admin.id } });
+          return { adminId: admin.id, count };
+        })
+      );
+      
+      // 选择用户数最少的管理员（负载均衡）
+      adminCounts.sort((a, b) => a.count - b.count);
+      return adminCounts[0].adminId;
+    } catch (error) {
+      this.logger.error('获取分配管理员失败:', error.message);
+      return null;
+    }
+  }
+
+  async register(dto: RegisterDto) {
+    // 用户名统一转小写（不区分大小写）
+    const username = dto.username.toLowerCase().trim();
+
+    // 验证用户名格式
+    const usernameValidation = this.validateUsername(dto.username);
+    if (!usernameValidation.valid) {
+      throw new BusinessException(1003, usernameValidation.message);
+    }
+
+    // 检查用户名是否已存在
+    const existUser = await this.userRepo.findOne({
+      where: { username },
+    });
+    if (existUser) {
+      throw BusinessException.userExists();
+    }
+
+    // 邀请码转大写
+    const inviterCode = dto.inviteCode.toUpperCase().trim();
+    
+    // 检查邀请码是否有效
+    const inviter = await this.userRepo.findOne({
+      where: { inviteCode: inviterCode },
+    });
+    if (!inviter) {
+      throw BusinessException.inviteCodeInvalid();
+    }
+    
+    // 验证密码强度
+    const passwordValidation = this.validatePasswordStrength(dto.password);
+    if (!passwordValidation.valid) {
+      throw new BusinessException(1004, passwordValidation.message);
+    }
+
+    // 生成唯一的 UID 和邀请码
+    let uid = this.generateUid();
+    let newInviteCode = this.generateInviteCode();
+
+    // 确保唯一性
+    while (await this.userRepo.findOne({ where: { uid } })) {
+      uid = this.generateUid();
+    }
+    while (await this.userRepo.findOne({ where: { inviteCode: newInviteCode } })) {
+      newInviteCode = this.generateInviteCode();
+    }
+
+    // 加密密码
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+
+    // 使用事务确保注册流程的原子性
+    const result = await this.dataSource.transaction(async (manager) => {
+      // 获取要分配的管理员
+      const assignedAdminId = await this.getNextAssignedAdmin();
+      
+      // 创建用户
+      const user = manager.create(User, {
+        uid,
+        username, // 已转小写
+        passwordHash,
+        nickname: '新用户',
+        inviteCode: newInviteCode,
+        inviterId: inviter.id,
+        kycStatus: 0,
+        status: 1,
+        assignedAdminId, // 自动分流分配的管理员
+      });
+      await manager.save(user);
+
+      // 创建邀请关系（一级）
+      const invite1 = manager.create(UserInvite, {
+        userId: user.id,
+        inviterId: inviter.id,
+        level: 1,
+      });
+      await manager.save(invite1);
+
+      // 如果邀请人也有邀请人，创建二级邀请关系
+      if (inviter.inviterId) {
+        const invite2 = manager.create(UserInvite, {
+          userId: user.id,
+          inviterId: inviter.inviterId,
+          level: 2,
+        });
+        await manager.save(invite2);
+      }
+
+      // 为用户创建默认钱包（所有启用的币种）
+      const coins = await manager.find(Coin, { where: { status: 1 } });
+      for (const coin of coins) {
+        const wallet = manager.create(Wallet, {
+          userId: user.id,
+          coinId: coin.id,
+          balance: '0',
+          frozen: '0',
+        });
+        await manager.save(wallet);
+      }
+
+      return user;
+    });
+
+    // 事务成功后，发放注册奖励（单独处理，失败不影响注册）
+    try {
+      await this.issueSignupReward(inviter.id, result.id);
+    } catch (err) {
+      this.logger.error('发放注册奖励失败:', err.message);
+    }
+
+    // 发送 Telegram 通知（新用户注册）
+    await this.telegramNotify.notifyUserRegister({
+      userId: result.id,
+      username: result.username,
+      email: dto.username,
+    }).catch(err => {
+      this.logger.error('Telegram 通知失败:', err.message);
+    });
+
+    return {
+      user: {
+        id: result.id,
+        uid: result.uid,
+        username: result.username,
+        nickname: result.nickname,
+        inviteCode: result.inviteCode,
+        inviterId: result.inviterId,
+        createdAt: this.formatDate(result.createdAt),
+      },
+    };
+  }
+
+  /**
+   * 用户登录
+   */
+  async login(dto: LoginDto, ip?: string) {
+    // 用户名统一转小写（不区分大小写）
+    const username = dto.username.toLowerCase().trim();
+    
+    const user = await this.userRepo.findOne({
+      where: { username, deletedAt: null },
+    });
+    if (!user) {
+      throw BusinessException.userNotFound();
+    }
+
+    if (user.status !== 1) {
+      throw new BusinessException(1001, '账号已被禁用');
+    }
+
+    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
+    if (!isPasswordValid) {
+      throw BusinessException.passwordError();
+    }
+
+    // 更新最后登录时间和 IP
+    user.lastLoginAt = new Date();
+    user.lastLoginIp = ip || null;
+    await this.userRepo.save(user);
+
+    // 生成 JWT
+    const payload: JwtPayload = {
+      sub: user.id,
+      uid: user.uid,
+      username: user.username,
+      type: 'user',
+    };
+    const token = this.jwtService.sign(payload);
+
+    return {
+      token,
+      user: {
+        id: user.id,
+        uid: user.uid,
+        username: user.username,
+        nickname: user.nickname,
+        avatar: user.avatar,
+        inviteCode: user.inviteCode,
+        createdAt: this.formatDate(user.createdAt),
+      },
+    };
+  }
+
+  /**
+   * 获取用户信息
+   */
+  async getProfile(userId: number) {
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw BusinessException.userNotFound();
+    }
+
+    // 获取等级名称
+    const levelNames = {
+      1: '准入会员',
+      2: '优选会员',
+      3: '资本合伙人',
+      4: '执行官合伙人',
+      5: '主权合伙人'
+    };
+
+    return {
+      id: user.id,
+      uid: user.uid,
+      username: user.username,
+      nickname: user.nickname || user.username,
+      avatar: user.avatar,
+      bio: user.bio,
+      inviteCode: user.inviteCode,
+      inviteCount: user.inviteCount,
+      teamCount: user.teamCount,
+      totalCommission: user.totalCommission,
+      level: user.level,
+      levelName: levelNames[user.level] || '准入会员',
+      kycStatus: user.kycStatus,
+      isVerified: user.isVerified,
+      userTag: user.userTag,
+      followerCount: user.followerCount,
+      followingCount: user.followingCount,
+      postCount: user.postCount,
+      friendCount: user.friendCount,
+      socialStatus: user.socialStatus,
+      role: user.role,
+      tronAddress: user.tronAddress || null,
+      createdAt: this.formatDate(user.createdAt),
+      lastLoginAt: user.lastLoginAt ? this.formatDate(user.lastLoginAt) : null,
+    };
+  }
+
+  /**
+   * 获取用户余额
+   */
+  async getBalance(userId: number) {
+    const wallets = await this.walletRepo.find({
+      where: { userId },
+      relations: ['coin'],
+    });
+
+    const assets = wallets.map((wallet) => ({
+      currency: wallet.coin.symbol,
+      coin: wallet.coin.symbol,
+      symbol: wallet.coin.symbol,
+      name: wallet.coin.name,
+      available: wallet.balance,
+      balance: wallet.balance,
+      amount: wallet.balance,
+      locked: wallet.frozen,
+      usdValue: wallet.balance, // 暂时按 1:1 计算，后续可加入价格转换
+      value: wallet.balance,
+      icon: wallet.coin.icon,
+    }));
+
+    return { assets };
+  }
+
+  /**
+   * 获取用户三账户资产概览（USDT/AGX/黄金）
+   */
+  async getAssetsOverview(userId: number) {
+    // 获取钱包数据
+    const wallets = await this.walletRepo.find({
+      where: { userId },
+      relations: ['coin'],
+    });
+
+    // 获取黄金账户
+    let goldAccount = await this.goldAccountRepo.findOne({ where: { userId } });
+    if (!goldAccount) {
+      // 自动创建黄金账户
+      goldAccount = this.goldAccountRepo.create({
+        userId,
+        goldBalance: '0',
+        goldFrozen: '0',
+        usdtBalance: '0',
+        usdtFrozen: '0',
+        ozBalance: '0',
+        ozFrozen: '0',
+        ozTotalEarned: '0',
+        ozFromHolding: '0',
+        ozFromContract: '0',
+        totalDeposit: '0',
+        totalWithdraw: '0',
+        totalIncome: '0',
+        yesterdayIncome: '0',
+        holdingCount: 0,
+        holdingAmount: '0',
+        status: 1,
+      });
+      await this.goldAccountRepo.save(goldAccount);
+    }
+
+    // 查找USDT和AGX钱包
+    const usdtWallet = wallets.find(w => w.coin?.symbol === 'USDT');
+    const agxWallet = wallets.find(w => w.coin?.symbol === 'AGX');
+
+    // 金价（实际应从外部获取）
+    const goldPrice = 2650;
+
+    // 构建三账户数据
+    const accounts = {
+      // USDT账户
+      usdt: {
+        symbol: 'USDT',
+        name: 'Tether USD',
+        balance: usdtWallet?.balance || '0',
+        frozen: usdtWallet?.frozen || '0',
+        available: usdtWallet ? (parseFloat(usdtWallet.balance) - parseFloat(usdtWallet.frozen || '0')).toFixed(2) : '0',
+        usdValue: usdtWallet?.balance || '0',
+        icon: '/coins/usdt.png',
+      },
+      // AGX账户
+      agx: {
+        symbol: 'AGX',
+        name: 'Ascenda Gold Index',
+        balance: agxWallet?.balance || '0',
+        frozen: agxWallet?.frozen || '0',
+        available: agxWallet ? (parseFloat(agxWallet.balance) - parseFloat(agxWallet.frozen || '0')).toFixed(4) : '0',
+        usdValue: agxWallet ? (parseFloat(agxWallet.balance) * 0.10).toFixed(2) : '0', // AGX价格0.10 USD
+        icon: '/agx-new.png',
+        // 持币生金状态
+        holdingStatus: {
+          isQualified: parseFloat(agxWallet?.balance || '0') >= 100,
+          minRequired: 100,
+          dailyRate: 0.00001, // 每AGX每日生成的oz
+        },
+      },
+      // 黄金账户
+      gold: {
+        symbol: 'XAU',
+        name: '黄金账户',
+        ozBalance: goldAccount.ozBalance || '0',
+        ozFrozen: goldAccount.ozFrozen || '0',
+        ozAvailable: (parseFloat(goldAccount.ozBalance || '0') - parseFloat(goldAccount.ozFrozen || '0')).toFixed(6),
+        ozTotalEarned: goldAccount.ozTotalEarned || '0',
+        ozFromHolding: goldAccount.ozFromHolding || '0',
+        ozFromContract: goldAccount.ozFromContract || '0',
+        goldPrice: goldPrice,
+        usdValue: (parseFloat(goldAccount.ozBalance || '0') * goldPrice).toFixed(2),
+        icon: '/gold-icon.png',
+        // 收益统计
+        totalIncome: goldAccount.totalIncome || '0',
+        yesterdayIncome: goldAccount.yesterdayIncome || '0',
+      },
+    };
+
+    // 计算总资产（USD）
+    const totalUsd = (
+      parseFloat(accounts.usdt.usdValue) +
+      parseFloat(accounts.agx.usdValue) +
+      parseFloat(accounts.gold.usdValue)
+    ).toFixed(2);
+
+    return {
+      accounts,
+      totalUsd,
+      goldPrice,
+    };
+  }
+
+  /**
+   * 修改密码
+   */
+  async changePassword(userId: number, dto: ChangePasswordDto) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw BusinessException.userNotFound();
+    }
+
+    const isValid = await bcrypt.compare(dto.oldPassword, user.passwordHash);
+    if (!isValid) {
+      throw new BusinessException(1002, '旧密码错误');
+    }
+
+    user.passwordHash = await bcrypt.hash(dto.newPassword, 10);
+    await this.userRepo.save(user);
+    return {};
+  }
+
+  /**
+   * 更新用户信息
+   */
+  async updateProfile(userId: number, dto: UpdateProfileDto) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw BusinessException.userNotFound();
+    }
+
+    if (dto.nickname !== undefined) user.nickname = dto.nickname;
+    if (dto.avatar !== undefined) user.avatar = dto.avatar;
+
+    // 绑定/更新 TRON 地址
+    if (dto.tronAddress !== undefined) {
+      // 检查地址是否已被其他用户绑定
+      const existingUser = await this.userRepo.findOne({
+        where: { tronAddress: dto.tronAddress },
+      });
+      if (existingUser && existingUser.id !== userId) {
+        throw new BusinessException(1003, '该TRON地址已被其他用户绑定');
+      }
+      user.tronAddress = dto.tronAddress;
+    }
+
+    await this.userRepo.save(user);
+
+    return {
+      nickname: user.nickname,
+      avatar: user.avatar,
+      tronAddress: user.tronAddress,
+    };
+  }
+
+  /**
+   * 提交KYC认证
+   */
+  async submitKyc(userId: number, dto: SubmitKycDto) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw BusinessException.userNotFound();
+    }
+
+    // 检查是否已有待审核的KYC
+    const pending = await this.kycRepo.findOne({
+      where: { userId, status: 0 },
+    });
+    if (pending) {
+      throw new BusinessException(5002, '您已有待审核的认证申请');
+    }
+
+    // 检查是否已认证通过
+    if (user.kycStatus === 2) {
+      throw new BusinessException(5003, '您已完成实名认证');
+    }
+
+    // 数据验证
+    if (!dto.realName || dto.realName.trim().length < 2 || dto.realName.trim().length > 50) {
+      throw new BusinessException(5004, '真实姓名长度必须在2-50个字符之间');
+    }
+
+    // 简单的身份证号码格式验证（可根据需求调整）
+    if (!dto.idNumber || dto.idNumber.trim().length < 15 || dto.idNumber.trim().length > 18) {
+      throw new BusinessException(5005, '证件号码长度不正确');
+    }
+
+    const kyc = this.kycRepo.create({
+      userId,
+      realName: dto.realName.trim(),
+      idNumber: dto.idNumber.trim(),
+      idType: dto.idType,
+      frontImage: dto.frontImage,
+      backImage: dto.backImage,
+      holdImage: dto.holdImage,
+      status: 0, // 0: 待审核
+    });
+    await this.kycRepo.save(kyc);
+
+    // 更新用户KYC状态为认证中
+    user.kycStatus = 1;
+    await this.userRepo.save(user);
+
+    // 发送 Telegram 通知（实名认证提交）
+    await this.telegramNotify.notifyKycSubmitted({
+      userId: user.id,
+      username: user.username,
+      kycType: dto.idType === 1 ? '身份证' : dto.idType === 2 ? '护照' : '其他',
+    }).catch(err => {
+      this.logger.error('Telegram 通知失败:', err.message);
+    });
+
+    return { id: kyc.id };
+  }
+
+  /**
+   * 获取KYC状态
+   */
+  async getKycStatus(userId: number) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw BusinessException.userNotFound();
+    }
+
+    const kyc = await this.kycRepo.findOne({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+    });
+
+    return {
+      kycStatus: user.kycStatus,
+      kyc: kyc ? {
+        id: kyc.id,
+        realName: kyc.realName,
+        idNumber: kyc.idNumber.replace(/^(.{4}).*(.{4})$/, '$1****$2'),
+        idType: kyc.idType,
+        status: kyc.status,
+        remark: kyc.remark,
+        createdAt: this.formatDate(kyc.createdAt),
+      } : null,
+    };
+  }
+
+  /**
+   * 获取充值地址（平台统一收款地址）
+   */
+  async getDepositAddress(userId: number, dto: GetDepositAddressDto) {
+    // 获取用户信息，检查是否已绑定来源地址
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw BusinessException.userNotFound();
+    }
+
+    // 仅支持 USDT TRC20
+    if (dto.coin !== 'USDT' || dto.chain !== 'TRC20') {
+      throw new BusinessException(1010, '目前仅支持 USDT TRC20 充值');
+    }
+
+    // 从配置获取平台收款地址
+    const platformAddress = await this.configRepo.findOne({
+      where: { configKey: 'tron_usdt_address' }
+    });
+
+    if (!platformAddress || !platformAddress.configValue) {
+      throw new BusinessException(1011, '平台收款地址未配置，请联系客服');
+    }
+
+    return {
+      coin: dto.coin,
+      chain: dto.chain,
+      // 平台收款地址（用户需要向此地址转账）
+      address: platformAddress.configValue,
+      // 用户已绑定的来源地址
+      boundAddress: user.tronAddress || null,
+      // 提示信息
+      notice: user.tronAddress
+        ? `请从您绑定的地址 ${user.tronAddress.slice(0, 6)}...${user.tronAddress.slice(-6)} 转账到平台地址`
+        : '请先在"设置"中绑定您的USDT充值地址后再进行充值',
+      minDeposit: '10',
+      confirmations: 20,
+    };
+  }
+
+  /**
+   * 创建充值订单
+   * 订单有效期10分钟，期间系统会自动监听链上交易
+   */
+  async createDepositOrder(userId: number, dto: any) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw BusinessException.userNotFound();
+    }
+
+    // 检查是否绑定了 TRON 地址
+    if (!user.tronAddress) {
+      throw new BusinessException(1012, '请先绑定USDT充值地址');
+    }
+
+    // 仅支持 USDT TRC20
+    if (dto.coin !== 'USDT' || dto.chain !== 'TRC20') {
+      throw new BusinessException(1010, '目前仅支持 USDT TRC20 充值');
+    }
+
+    // 验证金额
+    const amount = parseFloat(dto.amount);
+    if (isNaN(amount) || amount < 10) {
+      throw new BusinessException(1013, '最小充值金额为 10 USDT');
+    }
+
+    // 检查是否有未完成的充值订单
+    const pendingOrder = await this.rechargeRepo.findOne({
+      where: { userId, status: 0 },
+      order: { createdAt: 'DESC' }
+    });
+
+    if (pendingOrder) {
+      // 检查是否超过10分钟
+      const expireTime = new Date(pendingOrder.createdAt.getTime() + 10 * 60 * 1000);
+      if (new Date() < expireTime) {
+        // 还有未过期的订单，返回该订单信息
+        const remainingSeconds = Math.floor((expireTime.getTime() - Date.now()) / 1000);
+        return {
+          orderNo: pendingOrder.orderNo,
+          amount: pendingOrder.amount,
+          status: 0,
+          fromAddress: user.tronAddress,
+          remainingSeconds,
+          createdAt: this.formatDate(pendingOrder.createdAt),
+          message: '您有一个待确认的充值订单'
+        };
+      } else {
+        // 订单已过期，更新状态
+        pendingOrder.status = 2; // 已超时
+        await this.rechargeRepo.save(pendingOrder);
+      }
+    }
+
+    // 获取平台收款地址
+    const platformAddress = await this.configRepo.findOne({
+      where: { configKey: 'tron_usdt_address' }
+    });
+
+    if (!platformAddress || !platformAddress.configValue) {
+      throw new BusinessException(1011, '平台收款地址未配置，请联系客服');
+    }
+
+    // 生成订单号
+    const orderNo = `D${Date.now()}${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+
+    // 创建充值订单
+    const recharge = this.rechargeRepo.create({
+      orderNo,
+      userId,
+      coin: dto.coin,
+      chain: dto.chain,
+      amount: amount.toFixed(6),
+      fromAddress: user.tronAddress,
+      toAddress: platformAddress.configValue,
+      status: 0, // 待确认
+    });
+    await this.rechargeRepo.save(recharge);
+
+    this.logger.log(`充值订单创建: ${orderNo}, 用户: ${user.username}, 金额: ${amount} USDT`);
+
+    // 通知 TRON 监听服务开始监听此订单
+    // 这里通过事件或直接调用来触发监听
+    // TODO: 可以通过 EventEmitter 或 Bull Queue 来实现
+
+    return {
+      orderNo,
+      amount: recharge.amount,
+      status: 0,
+      fromAddress: user.tronAddress,
+      toAddress: platformAddress.configValue,
+      remainingSeconds: 600, // 10分钟
+      createdAt: this.formatDate(recharge.createdAt),
+      message: '请在10分钟内完成转账，系统将自动确认入账'
+    };
+  }
+
+  /**
+   * 查询充值订单状态
+   */
+  async getDepositOrderStatus(userId: number, orderNo: string) {
+    const order = await this.rechargeRepo.findOne({
+      where: { orderNo, userId }
+    });
+
+    if (!order) {
+      throw new BusinessException(1014, '订单不存在');
+    }
+
+    // 计算剩余时间
+    const expireTime = new Date(order.createdAt.getTime() + 10 * 60 * 1000);
+    const remainingSeconds = Math.max(0, Math.floor((expireTime.getTime() - Date.now()) / 1000));
+
+    // 如果订单待确认且已超时，更新状态
+    if (order.status === 0 && remainingSeconds === 0) {
+      order.status = 2; // 已超时
+      await this.rechargeRepo.save(order);
+    }
+
+    const statusMap = {
+      0: '待确认',
+      1: '已完成',
+      2: '已超时'
+    };
+
+    return {
+      orderNo: order.orderNo,
+      amount: order.amount,
+      coin: order.coin,
+      chain: order.chain,
+      status: order.status,
+      statusText: statusMap[order.status] || '未知',
+      txHash: order.txHash,
+      fromAddress: order.fromAddress,
+      toAddress: order.toAddress,
+      remainingSeconds: order.status === 0 ? remainingSeconds : 0,
+      createdAt: this.formatDate(order.createdAt),
+    };
+  }
+
+  /**
+   * 获取充值记录
+   */
+  async getDepositHistory(userId: number, query: any) {
+    const { page = 1, pageSize = 20, coin } = query;
+
+    const qb = this.rechargeRepo.createQueryBuilder('r')
+      .where('r.userId = :userId', { userId });
+
+    if (coin) {
+      qb.andWhere('r.coin = :coin', { coin });
+    }
+
+    qb.orderBy('r.createdAt', 'DESC')
+      .skip((page - 1) * pageSize)
+      .take(pageSize);
+
+    const [list, total] = await qb.getManyAndCount();
+
+    return {
+      list: list.map(r => ({
+        id: r.id,
+        orderNo: r.orderNo,
+        coin: r.coin,
+        chain: r.chain,
+        amount: r.amount,
+        status: r.status,
+        txHash: r.txHash,
+        createdAt: this.formatDate(r.createdAt),
+      })),
+      total,
+    };
+  }
+
+  /**
+   * 申请提现
+   */
+  async withdraw(userId: number, dto: WithdrawDto) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw BusinessException.userNotFound();
+    }
+
+    // 检查KYC
+    if (user.kycStatus !== 2) {
+      throw new BusinessException(6002, '请先完成实名认证');
+    }
+
+    // 检查余额
+    const wallet = await this.walletRepo.findOne({
+      where: { userId },
+      relations: ['coin'],
+    });
+
+    if (!wallet) {
+      throw new BusinessException(6003, '钱包不存在');
+    }
+
+    const amount = parseFloat(dto.amount);
+    const balance = parseFloat(wallet.balance);
+    const fee = amount * 0.01; // 1%手续费
+    const actualAmount = amount - fee;
+
+    if (balance < amount) {
+      throw new BusinessException(6004, '余额不足');
+    }
+
+    // 生成订单号
+    const orderNo = `W${Date.now()}${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+
+    // 使用事务确保数据一致性
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // 创建提现记录
+      const withdraw = queryRunner.manager.create(Withdraw, {
+        orderNo,
+        userId,
+        coin: dto.coin,
+        chain: dto.chain,
+        amount: dto.amount,
+        fee: fee.toFixed(8),
+        actualAmount: actualAmount.toFixed(8),
+        toAddress: dto.address,
+        status: 0,
+      });
+      await queryRunner.manager.save(withdraw);
+
+      // 冻结余额
+      await queryRunner.manager.update(Wallet, wallet.id, {
+        balance: (balance - amount).toFixed(8),
+        frozen: (parseFloat(wallet.frozen) + amount).toFixed(8),
+      });
+
+      await queryRunner.commitTransaction();
+
+      // 发送 Telegram 通知（提款申请提交）
+      // 获取 KYC 真实姓名
+      const kyc = await this.kycRepo.findOne({
+        where: { userId: user.id, status: 1 }
+      });
+
+      // 获取推荐人用户名
+      let inviterName = undefined;
+      if (user.inviterId) {
+        const inviter = await this.userRepo.findOne({
+          where: { id: user.inviterId },
+          select: ['username']
+        });
+        inviterName = inviter?.username;
+      }
+
+      await this.telegramNotify.notifyWithdrawSubmitted({
+        userId: user.id,
+        username: user.username,
+        amount: dto.amount,
+        address: dto.address,
+        isInternal: user.isInternal,
+        realName: kyc?.realName,
+        inviterName: inviterName,
+      }).catch(err => {
+        // 通知失败不影响主流程
+      });
+
+      return {
+        id: withdraw.id,
+        orderNo: withdraw.orderNo,
+        amount: withdraw.amount,
+        fee: withdraw.fee,
+        actualAmount: withdraw.actualAmount,
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
+   * 获取提现记录
+   */
+  async getWithdrawHistory(userId: number, query: any) {
+    const { page = 1, pageSize = 20, coin } = query;
+
+    const qb = this.withdrawRepo.createQueryBuilder('w')
+      .where('w.userId = :userId', { userId });
+
+    if (coin) {
+      qb.andWhere('w.coin = :coin', { coin });
+    }
+
+    qb.orderBy('w.createdAt', 'DESC')
+      .skip((page - 1) * pageSize)
+      .take(pageSize);
+
+    const [list, total] = await qb.getManyAndCount();
+
+    return {
+      list: list.map(w => ({
+        id: w.id,
+        orderNo: w.orderNo,
+        coin: w.coin,
+        chain: w.chain,
+        amount: w.amount,
+        fee: w.fee,
+        actualAmount: w.actualAmount,
+        toAddress: w.toAddress,
+        status: w.status,
+        txHash: w.txHash,
+        createdAt: this.formatDate(w.createdAt),
+      })),
+      total,
+    };
+  }
+
+  /**
+   * 获取邀请列表
+   */
+  async getInviteList(userId: number, query: any) {
+    const { page = 1, pageSize = 20, level = 1 } = query;
+
+    const qb = this.userInviteRepo.createQueryBuilder('i')
+      .leftJoinAndSelect('i.user', 'user')
+      .where('i.inviterId = :userId', { userId })
+      .andWhere('i.level = :level', { level: parseInt(level) });
+
+    qb.orderBy('i.createdAt', 'DESC')
+      .skip((page - 1) * pageSize)
+      .take(pageSize);
+
+    const [list, total] = await qb.getManyAndCount();
+
+    return {
+      list: list.map(i => ({
+        id: i.id,
+        userId: i.userId,
+        username: i.user?.username || '-',
+        nickname: i.user?.nickname || '-',
+        level: i.level,
+        createdAt: this.formatDate(i.createdAt),
+      })),
+      total,
+    };
+  }
+
+  /**
+   * 获取邀请统计
+   */
+  async getInviteStats(userId: number) {
+    const level1 = await this.userInviteRepo.count({
+      where: { inviterId: userId, level: 1 },
+    });
+    const level2 = await this.userInviteRepo.count({
+      where: { inviterId: userId, level: 2 },
+    });
+
+    // 统计返佣（暂返回0）
+    const totalCommission = '0.00';
+    const todayCommission = '0.00';
+
+    return {
+      level1Count: level1,
+      level2Count: level2,
+      totalCount: level1 + level2,
+      totalCommission,
+      todayCommission,
+    };
+  }
+
+  /**
+   * 获取有效公告
+   */
+  async getActiveNotices() {
+    const now = new Date();
+    const list = await this.noticeRepo.createQueryBuilder('n')
+      .where('n.status = 1')
+      .andWhere('(n.startAt IS NULL OR n.startAt <= :now)', { now })
+      .andWhere('(n.endAt IS NULL OR n.endAt >= :now)', { now })
+      .orderBy('n.sortOrder', 'ASC')
+      .addOrderBy('n.id', 'DESC')
+      .getMany();
+
+    return list.map(n => ({
+      id: n.id,
+      title: n.title,
+      content: n.content,
+      type: n.type,
+    }));
+  }
+
+  /**
+   * 发放注册奖励
+   * @param inviterId 邀请人ID
+   * @param invitedUserId 被邀请人ID
+   */
+  private async issueSignupReward(inviterId: number, invitedUserId: number) {
+    try {
+      // 获取注册奖励配置
+      const signupRewardConfig = await this.configRepo.findOne({
+        where: { configKey: 'signup_reward_amount' }
+      });
+      const rewardAmount = signupRewardConfig ? parseFloat(signupRewardConfig.configValue) : 5; // 默认5 USDT
+
+      // 获取邀请人的USDT钱包
+      const usdtCoin = await this.coinRepo.findOne({ where: { symbol: 'USDT' } });
+      if (!usdtCoin) {
+        this.logger.log('未找到USDT币种，跳过注册奖励');
+        return;
+      }
+
+      const inviterWallet = await this.walletRepo.findOne({
+        where: { userId: inviterId, coinId: usdtCoin.id }
+      });
+
+      if (!inviterWallet) {
+        this.logger.log('邀请人USDT钱包不存在，跳过注册奖励');
+        return;
+      }
+
+      // 发放奖励
+      const currentBalance = parseFloat(inviterWallet.balance || '0');
+      const newBalance = currentBalance + rewardAmount;
+      inviterWallet.balance = newBalance.toFixed(8);
+      await this.walletRepo.save(inviterWallet);
+
+      // 记录资产流水
+      const assetLog = this.assetLogRepo.create({
+        userId: inviterId,
+        coin: 'USDT',
+        type: 'invite_signup',
+        amount: rewardAmount.toFixed(8),
+        balanceBefore: currentBalance.toFixed(8),
+        balanceAfter: newBalance.toFixed(8),
+        refNo: `SIGNUP_${invitedUserId}_${Date.now()}`,
+        remark: `邀请用户注册奖励 (用户ID: ${invitedUserId})`,
+      });
+      await this.assetLogRepo.save(assetLog);
+
+      // 记录奖励发放记录
+      const inviteReward = this.inviteRewardRepo.create({
+        userId: inviterId,
+        invitedUserId: invitedUserId,
+        rewardType: 'signup',
+        amount: rewardAmount.toFixed(8),
+        coinSymbol: 'USDT',
+        status: 1,
+        issuedAt: new Date(),
+      });
+      await this.inviteRewardRepo.save(inviteReward);
+
+      this.logger.log(`注册奖励发放成功: 邀请人${inviterId} 获得 ${rewardAmount} USDT (被邀请人: ${invitedUserId})`);
+    } catch (error) {
+      this.logger.error('发放注册奖励失败:', error.message);
+      // 奖励发放失败不影响注册流程
+    }
+  }
+
+  /**
+   * 设置交易密码
+   */
+  async setTradePassword(userId: number, dto: { tradePassword: string; loginPassword?: string }) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw BusinessException.userNotFound();
+    }
+
+    // 如果已设置交易密码，不能用此接口
+    if (user.hasTradePassword === 1) {
+      throw new BusinessException(1010, '交易密码已设置，请使用修改功能');
+    }
+
+    // 首次设置需要验证登录密码
+    if (dto.loginPassword) {
+      const isValid = await bcrypt.compare(dto.loginPassword, user.passwordHash);
+      if (!isValid) {
+        throw new BusinessException(1002, '登录密码错误');
+      }
+    }
+
+    // 设置交易密码
+    user.tradePasswordHash = await bcrypt.hash(dto.tradePassword, 10);
+    user.hasTradePassword = 1;
+    await this.userRepo.save(user);
+
+    return { message: '交易密码设置成功' };
+  }
+
+  /**
+   * 修改交易密码
+   */
+  async changeTradePassword(userId: number, dto: { oldTradePassword: string; newTradePassword: string }) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw BusinessException.userNotFound();
+    }
+
+    if (user.hasTradePassword !== 1) {
+      throw new BusinessException(1011, '请先设置交易密码');
+    }
+
+    // 验证旧交易密码
+    const isValid = await bcrypt.compare(dto.oldTradePassword, user.tradePasswordHash);
+    if (!isValid) {
+      throw new BusinessException(1012, '原交易密码错误');
+    }
+
+    // 设置新交易密码
+    user.tradePasswordHash = await bcrypt.hash(dto.newTradePassword, 10);
+    await this.userRepo.save(user);
+
+    return { message: '交易密码修改成功' };
+  }
+
+  /**
+   * 验证交易密码
+   */
+  async verifyTradePassword(userId: number, dto: { tradePassword: string }) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw BusinessException.userNotFound();
+    }
+
+    if (user.hasTradePassword !== 1) {
+      throw new BusinessException(1011, '请先设置交易密码');
+    }
+
+    const isValid = await bcrypt.compare(dto.tradePassword, user.tradePasswordHash);
+    if (!isValid) {
+      throw new BusinessException(1012, '交易密码错误');
+    }
+
+    return { verified: true };
+  }
+
+  /**
+   * 获取交易密码状态
+   */
+  async getTradePasswordStatus(userId: number) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw BusinessException.userNotFound();
+    }
+
+    return {
+      hasTradePassword: user.hasTradePassword === 1,
+    };
+  }
+
+  /**
+   * 获取用户资产日志
+   */
+  async getAssetLogs(userId: number, query: any) {
+    const { page = 1, pageSize = 20, type } = query;
+
+    const queryBuilder = this.assetLogRepo.createQueryBuilder('log')
+      .where('"user_id" = :userId', { userId })
+      .leftJoinAndSelect('log.coin', 'coin')
+      .orderBy('log.createdAt', 'DESC');
+    
+    if (type) {
+      queryBuilder.andWhere('log.type = :type', { type });
+    }
+    
+    const [list, total] = await queryBuilder
+      .skip((page - 1) * pageSize)
+      .take(pageSize)
+      .getManyAndCount();
+    
+    // 格式化返回
+    return {
+      list: list.map(log => ({
+        id: log.id,
+        type: log.type,
+        amount: log.amount.toString(),
+        coin: log.coin,
+        balanceBefore: log.balanceBefore?.toString(),
+        balanceAfter: log.balanceAfter?.toString(),
+        remark: log.remark,
+        refNo: log.refNo,
+        createdAt: log.createdAt,
+      })),
+      total,
+      page: parseInt(page),
+      pageSize: parseInt(pageSize),
+    };
+  }
+}

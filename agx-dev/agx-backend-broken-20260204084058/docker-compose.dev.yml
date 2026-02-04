@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  postgres-dev:
+    image: postgres:15-alpine
+    container_name: agx-postgres-dev
+    environment:
+      POSTGRES_DB: agx_test
+      POSTGRES_USER: agx_test
+      POSTGRES_PASSWORD: dev_test_password_2026
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agx_test -d agx_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_dev_data:

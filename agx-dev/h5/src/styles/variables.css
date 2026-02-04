@@ -1,0 +1,75 @@
+/* 全局 CSS 变量定义 */
+:root {
+  /* 安全区域 */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  
+  /* 固定高度 */
+  --navbar-height: 56px;
+  --tabbar-height: 50px;
+  
+  /* 页面最大宽度 */
+  --page-max-width: 428px;
+  
+  /* 实际占用空间（包含安全区域） */
+  --navbar-total-height: calc(var(--navbar-height) + var(--safe-area-top));
+  --tabbar-total-height: calc(var(--tabbar-height) + var(--safe-area-bottom));
+  
+  /* 标准间距 */
+  --page-padding: 16px;
+  --card-margin: 12px;
+  --list-item-padding: 12px 16px;
+  
+  /* 品牌色 - Pro Max 金色主题 */
+  --color-brand: #C8AA6E;
+  --color-brand-light: #E8D5A3;
+  --color-brand-dark: #A08A5B;
+  
+  /* 语义色 */
+  --color-up: #0ECB81;      /* 涨 - 绿色 */
+  --color-down: #F6465D;    /* 跌 - 红色 */
+  --color-success: #0ECB81;
+  --color-warning: #C8AA6E;
+  --color-error: #F6465D;
+  --color-info: #3B82F6;
+  
+  /* 背景色 - 深色主题 */
+  --bg-page: #0D1117;
+  --bg-primary: #0D1117;
+  --bg-secondary: #161B22;
+  --bg-elevated: #1E262F;
+  --bg-surface: #21262D;
+  --bg-card: #1E262F;
+  --bg-hover: rgba(200, 170, 110, 0.08);
+  --bg-active: rgba(200, 170, 110, 0.15);
+  
+  /* 文字色 */
+  --text-primary: #E6EDF3;
+  --text-secondary: #C9D1D9;
+  --text-tertiary: #8B949E;
+  --text-inverse: #0D1117;
+  
+  /* 边框色 */
+  --border-primary: #21262D;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-color: #2B3139;
+  --border-color-light: #363D47;
+  
+  /* 阴影 */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.4);
+  
+  /* 圆角 */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  
+  /* 过渡动画 */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.2s ease;
+  --transition-slow: 0.3s ease;
+}
